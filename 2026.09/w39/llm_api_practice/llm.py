@@ -1,4 +1,3 @@
-
 import os
 import logging
 from pathlib import Path
@@ -67,7 +66,7 @@ def chat(question):
             url,
             headers=headers,
             json=data,
-            timeout=(10, 90)
+            timeout=(10, 130)
         )
 
         response.raise_for_status()
