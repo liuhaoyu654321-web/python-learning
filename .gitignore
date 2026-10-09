@@ -7,3 +7,9 @@
 # Python 缓存
 __pycache__/
 .pytest_cache/
+
+# SQLite 本地数据库
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
