@@ -1,0 +1,9 @@
+# API 密钥
+**/.env
+
+# Python 虚拟环境
+.venv/
+
+# Python 缓存
+__pycache__/
+.pytest_cache/
