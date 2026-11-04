@@ -1,0 +1,1528 @@
+## 2026-09-16｜W38 学习总结
+
+### 今日学习主题
+
+**Python 模块化：从单文件程序进入多文件项目结构**
+
+今天的核心不是增加很多新语法，而是把之前写在一个文件里的 Todo 程序拆成多个文件，开始理解一个小型 Python 项目应该怎样组织代码。
+
+### 今日完成内容
+
+#### 1. 理解 Module / Import
+
+理解了：
+
+* 一个 `.py` 文件可以作为一个 **Module（模块）**
+* 一个 Python 文件可以通过 `import` 使用另一个文件中的函数
+
+实际练习：
+
+```python
+from math_tools import multiply, add
+```
+
+成功调用：
+
+```python
+multiply(3, 4)
+add(3, 4)
+```
+
+输出：
+
+```text
+12
+7
+```
+
+理解了两种导入方式的基本区别：
+
+```python
+from math_tools import multiply
+```
+
+导入具体函数，后续可以直接：
+
+```python
+multiply()
+```
+
+而：
+
+```python
+import math_tools
+```
+
+导入整个模块，后续需要：
+
+```python
+math_tools.multiply()
+```
+
+---
+
+#### 2. 开始理解“模块职责”
+
+把原 Todo 程序中的函数按照职责分类：
+
+```text
+main.py
+├── show_menu()
+└── while True 主程序循环
+
+todo.py
+├── show_todos()
+├── add_todo()
+├── complete_todo()
+└── delete_todo()
+
+storage.py
+├── load_todos()
+└── save_todos()
+```
+
+目前形成的简单理解：
+
+```text
+main.py
+= 负责指挥程序运行和用户交互
+
+todo.py
+= 负责 Todo 业务逻辑
+
+storage.py
+= 负责数据读取和保存
+```
+
+这一步开始从：
+
+> “会写几个函数”
+
+进入：
+
+> “知道不同代码为什么应该放到不同文件里”。
+
+---
+
+#### 3. 完成 Todo 多文件拆分
+
+最终建立：
+
+```text
+todo_app/
+├── main.py
+├── todo.py
+├── storage.py
+└── todos.json
+```
+
+`main.py` 中通过：
+
+```python
+from todo import show_todos, add_todo, complete_todo, delete_todo
+from storage import load_todos, save_todos
+```
+
+把三个模块连接起来。
+
+多文件 Todo 程序已经能够正常启动并显示菜单。
+
+---
+
+#### 4. 复习并 Debug W37 旧知识
+
+在重新组织 `main.py` 时暴露并修正了几个问题。
+
+错误：
+
+```python
+todos = load_todos
+```
+
+修正：
+
+```python
+todos = load_todos()
+```
+
+再次强化：
+
+> 函数名本身和“执行函数”不是一回事，`()` 才代表调用函数。
+
+---
+
+错误：
+
+```python
+choice = input("请输入")
+
+if choice == 1:
+```
+
+修正：
+
+```python
+if choice == "1":
+```
+
+再次确认：
+
+```python
+input()
+```
+
+返回的是：
+
+```text
+str
+```
+
+---
+
+错误：
+
+```python
+index = int(print("请输入"))
+```
+
+修正：
+
+```python
+index = int(input("请输入"))
+```
+
+重新区分：
+
+```text
+print()
+= 输出给用户看
+
+input()
+= 接收用户输入
+```
+
+---
+
+错误：
+
+```python
+save_todos()
+```
+
+修正：
+
+```python
+save_todos(todos)
+```
+
+因为函数定义是：
+
+```python
+def save_todos(todos):
+```
+
+再次练习了：
+
+> 函数参数和函数调用时传入的数据必须对应。
+
+---
+
+### 5. 接触“当前工作目录 / 相对路径”
+
+今天出现了一个很重要的真实问题。
+
+程序运行文件：
+
+```text
+D:\代码学习\2026.09\w38\todo_app\main.py
+```
+
+但是终端当前工作目录是：
+
+```text
+D:\代码学习
+```
+
+而 `storage.py` 使用：
+
+```python
+open("todos.json")
+```
+
+最终实际读取和修改的是：
+
+```text
+D:\代码学习\todos.json
+```
+
+而不是：
+
+```text
+D:\代码学习\2026.09\w38\todo_app\todos.json
+```
+
+因此今天第一次理解：
+
+> **相对路径默认是相对于当前工作目录，而不是自动相对于当前 `.py` 文件所在目录。**
+
+这个问题下一次继续解决。
+
+---
+
+### 今日程序数据流
+
+目前已经可以理解为：
+
+```text
+main.py
+│
+├── import todo.py
+│      └── Todo 业务逻辑
+│
+├── import storage.py
+│      └── JSON 读写
+│
+└── while True
+       ↓
+    用户选择
+       ↓
+    调用对应函数
+       ↓
+    修改 todos
+       ↓
+    save_todos()
+       ↓
+    todos.json
+```
+
+---
+
+### 今日能力状态
+
+#### 🟢 初步通过
+
+* 理解 Python module 是什么
+* `from ... import ...`
+* 从同一模块导入多个函数
+* 能判断基本模块职责
+* 能把单文件程序拆为 `main / todo / storage`
+* 多文件之间通过 import 协作
+* Todo 多文件版能够启动运行
+* `input()` 返回字符串
+* 函数调用需要 `()`
+* 调用带参数函数时需要传入参数
+
+#### 🟡 继续巩固
+
+* 从空白独立组织完整多文件程序
+* import 语法熟练度
+* 函数参数与数据流
+* 相对路径 / 当前工作目录
+* 不参考旧代码重新组织较长程序
+* W37 中的 `try/except` 边界
+* Git 持续使用
+
+---
+
+### 今日学习方式复盘
+
+Todo 主程序没有完全凭记忆从空白写出，而是：
+
+```text
+参考旧代码
+→ 自己重新手敲
+→ 暴露旧知识错误
+→ 自己修改
+→ 重新运行
+```
+
+因此今天不能算：
+
+> “已经能闭卷独立写完整 Todo 项目”。
+
+但已经完成了今天真正的学习目标：
+
+> **理解为什么要拆文件，以及拆开以后这些文件怎样连接起来。**
+
+同时确认：
+
+> 机械重复手敲大量已经理解的样板代码，不作为以后学习的硬性要求；重点仍然是理解、判断、修改、Debug 和关键部分的独立复现。
+
+---
+
+### 今日进度
+
+**W38 当前核心：模块化 / import —— 初步通过 ✅**
+
+今天完成：
+
+```text
+单文件程序
+→ module / import
+→ 多文件职责划分
+→ Todo 项目拆分
+→ 多文件运行
+→ Debug
+→ 发现相对路径问题
+```
+
+### 下一步
+
+下一次继续：
+
+1. 正式解决 `todos.json` 的路径问题
+2. 学习更稳定的文件路径处理
+3. 进入 `venv`
+4. `pip`
+5. `requirements.txt`
+
+之后继续按照 W38 Gate 推进，而不是按星期补课程。
+## 2026-09-17｜W38 学习总结
+
+### 今日学习主题
+
+**Python 项目工程基础：路径处理 + 虚拟环境 + 依赖管理 + Git 项目管理**
+
+今天和前几天不同，几乎没有继续学习新的 Python 语法，而是开始理解：
+
+> **一个 Python 项目除了代码之外，还需要怎样管理文件路径、运行环境、第三方包和 Git。**
+
+今天更多是“项目工程知识”和命令行操作，很多命令都是第一次接触。
+
+---
+
+### 1. 解决 `todos.json` 路径问题
+
+昨天发现：
+
+```python
+open("todos.json")
+```
+
+不会自动寻找 `storage.py` 所在目录的文件。
+
+如果当前 PowerShell 工作目录是：
+
+```text
+D:\代码学习
+```
+
+那么它可能读取：
+
+```text
+D:\代码学习\todos.json
+```
+
+即使真正运行的代码位于：
+
+```text
+D:\代码学习\2026.09\w38\todo_app\
+```
+
+因此第一次正式理解：
+
+> **相对路径默认相对于当前工作目录，而不是当前 `.py` 文件所在目录。**
+
+---
+
+### 2. 学习 `pathlib` 和 `Path`
+
+新增：
+
+```python
+from pathlib import Path
+```
+
+学习：
+
+```python
+Path(__file__)
+```
+
+表示当前 Python 文件自身的位置。
+
+```python
+Path(__file__).parent
+```
+
+表示当前 Python 文件所在的文件夹。
+
+最终：
+
+```python
+BASE_DIR = Path(__file__).parent
+DATA_FILE = BASE_DIR / "todos.json"
+```
+
+可以稳定得到：
+
+```text
+...\todo_app\todos.json
+```
+
+于是把：
+
+```python
+open("todos.json")
+```
+
+改成：
+
+```python
+open(DATA_FILE)
+```
+
+这样无论终端从哪里启动程序，都能读取正确的 `todo_app/todos.json`。
+
+实际验证成功。
+
+---
+
+### 3. 当前稳定的数据文件处理方式
+
+`storage.py` 现在类似：
+
+```python
+import json
+from pathlib import Path
+
+BASE_DIR = Path(__file__).parent
+DATA_FILE = BASE_DIR / "todos.json"
+
+
+def load_todos():
+    with open(DATA_FILE, "r", encoding="utf-8") as f:
+        data = json.load(f)
+        return data
+
+
+def save_todos(todos):
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(todos, f, ensure_ascii=False, indent=4)
+```
+
+理解的数据流：
+
+```text
+storage.py
+↓
+找到自己所在目录
+↓
+定位 todos.json
+↓
+读取 / 保存
+↓
+main.py 使用数据
+```
+
+---
+
+### 4. 第一次创建 Python 虚拟环境 `venv`
+
+在项目目录执行：
+
+```powershell
+python -m venv .venv
+```
+
+理解：
+
+```text
+python
+= 使用 Python
+
+-m
+= 运行一个 Python 模块
+
+venv
+= Python 自带的虚拟环境工具
+
+.venv
+= 创建出来的虚拟环境文件夹名称
+```
+
+可以简单记成：
+
+```text
+venv
+= 造环境的工具
+
+.venv
+= 造出来的环境
+```
+
+---
+
+### 5. 理解为什么项目需要虚拟环境
+
+今天最重要的概念之一：
+
+> **venv 让不同 Python 项目拥有各自独立的 Python 第三方包环境，避免项目之间互相影响。**
+
+例如：
+
+```text
+项目 A
+└── .venv
+    └── requests / fastapi / openai 的一套版本
+
+项目 B
+└── .venv
+    └── 自己的另一套版本
+```
+
+这样项目 A 升级某个包，不会自动破坏项目 B。
+
+不需要每一个简单 `.py` 练习都创建 venv。
+
+但：
+
+> **真正长期开发的 Python 项目，最好拥有自己的虚拟环境。**
+
+---
+
+### 6. 激活 / 退出虚拟环境
+
+PowerShell 激活：
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+成功后终端出现：
+
+```text
+(.venv)
+```
+
+代表当前终端已经进入项目虚拟环境。
+
+退出：
+
+```powershell
+deactivate
+```
+
+---
+
+### 7. 实际验证 venv 与系统 Python 是两个环境
+
+使用：
+
+```powershell
+where.exe python
+```
+
+发现电脑本身存在多个 Python：
+
+```text
+todo_app\.venv\Scripts\python.exe
+Python312\python.exe
+Python313\python.exe
+...
+```
+
+激活 `.venv` 后：
+
+```text
+todo_app\.venv\Scripts\python.exe
+```
+
+排在最前面。
+
+说明：
+
+> 当前终端里的 `python` 和 `pip` 会优先使用项目自己的虚拟环境。
+
+---
+
+### 8. 学习 `pip`
+
+第一次正式理解：
+
+> **pip 是 Python 安装和管理第三方包的工具。**
+
+在 `.venv` 中安装：
+
+```powershell
+python -m pip install requests
+```
+
+然后查看：
+
+```powershell
+python -m pip show requests
+```
+
+发现安装位置：
+
+```text
+...\todo_app\.venv\Lib\site-packages
+```
+
+退出 venv 后再次查看，系统 Python 的 `requests` 位于：
+
+```text
+...\Python312\Lib\site-packages
+```
+
+两者即使版本相同，也是两份不同环境中的安装。
+
+---
+
+### 9. 学习 `requirements.txt`
+
+运行：
+
+```powershell
+python -m pip freeze
+```
+
+看到当前虚拟环境安装的第三方包，例如：
+
+```text
+certifi==...
+charset-normalizer==...
+idna==...
+requests==2.34.2
+urllib3==...
+```
+
+然后：
+
+```powershell
+python -m pip freeze > requirements.txt
+```
+
+第一次理解：
+
+```text
+.venv
+= 真正装着第三方包的环境
+
+requirements.txt
+= 记录这些依赖和版本的清单
+```
+
+以后别人拿到项目，可以：
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+重新安装项目需要的依赖。
+
+因此：
+
+> GitHub 不需要上传整个 `.venv`，但应该保存 `requirements.txt`。
+
+---
+
+### 10. 理解第三方包之间也有依赖
+
+今天只主动安装了：
+
+```text
+requests
+```
+
+但 `pip freeze` 出现多个包。
+
+原因是 `requests` 自己还依赖：
+
+```text
+certifi
+charset-normalizer
+idna
+urllib3
+```
+
+因此 pip 会自动把依赖一起安装。
+
+---
+
+### 11. 第一次使用 `.gitignore`
+
+创建：
+
+```text
+.gitignore
+```
+
+内容：
+
+```gitignore
+.venv/
+__pycache__/
+```
+
+理解：
+
+> `.gitignore` 用来告诉 Git：哪些本地文件或自动生成内容不应该进入版本控制。
+
+这里：
+
+```text
+.venv/
+```
+
+是本机虚拟环境，不应该提交。
+
+```text
+__pycache__/
+```
+
+是 Python 自动生成的缓存，也不应该提交。
+
+---
+
+### 12. 实际验证 `.gitignore`
+
+运行：
+
+```powershell
+git status --short --untracked-files=all .
+```
+
+Git 显示：
+
+```text
+?? .gitignore
+?? main.py
+?? requirements.txt
+?? storage.py
+?? todo.py
+?? todos.json
+```
+
+但没有：
+
+```text
+.venv/
+__pycache__/
+```
+
+证明 `.gitignore` 成功生效。
+
+同时复习：
+
+```text
+?? = Untracked
+```
+
+即：
+
+> Git 看到了文件，但是目前还没有跟踪。
+
+---
+
+### 13. 完成第二次真实 Git Commit
+
+执行：
+
+```powershell
+git add .
+```
+
+然后：
+
+```powershell
+git commit -m "modularize todo app and add project environment"
+```
+
+成功生成：
+
+```text
+7308dd7
+modularize todo app and add project environment
+```
+
+本次提交包含：
+
+```text
+.gitignore
+main.py
+requirements.txt
+storage.py
+todo.py
+todos.json
+```
+
+没有提交：
+
+```text
+.venv
+__pycache__
+```
+
+再次确认：
+
+```text
+git add
+→ 放进暂存区
+
+git commit
+→ 在本地创建版本记录
+
+git push
+→ 才是上传远程 / GitHub
+```
+
+今天没有强行为了练习而执行 `git push`。
+
+---
+
+### 14. 今日形成的完整 Python 项目结构
+
+目前：
+
+```text
+todo_app/
+├── .venv/             ← 项目自己的 Python 环境，不提交 Git
+├── __pycache__/       ← Python 缓存，不提交 Git
+├── .gitignore
+├── main.py
+├── todo.py
+├── storage.py
+├── todos.json
+└── requirements.txt
+```
+
+相比之前只有：
+
+```text
+9.py
+```
+
+已经开始进入真正的 Python 项目组织方式。
+
+---
+
+### 15. 今天真正建立的工程链路
+
+```text
+Python 多文件项目
+↓
+Path / pathlib
+↓
+稳定处理文件路径
+↓
+创建 .venv
+↓
+激活虚拟环境
+↓
+pip 安装第三方包
+↓
+requirements.txt 记录依赖
+↓
+.gitignore 排除本地环境
+↓
+Git 保存真正的项目文件
+```
+
+---
+
+### 16. 关于今天大量命令行的掌握要求
+
+今天出现了很多第一次见的命令，例如：
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+deactivate
+
+python -m pip install requests
+python -m pip freeze
+python -m pip freeze > requirements.txt
+
+git status --short --untracked-files=all .
+```
+
+**今天不要求全部背下来。**
+
+当前学习要求分三层：
+
+#### 🟢 要理解概念
+
+需要知道：
+
+```text
+venv
+→ 为什么项目需要独立环境
+
+pip
+→ 用来安装第三方 Python 包
+
+requirements.txt
+→ 记录项目依赖
+
+.gitignore
+→ 告诉 Git 哪些内容不要提交
+```
+
+#### 🟡 常用命令目前做到“看着会用”
+
+例如：
+
+```text
+创建 / 激活 venv
+pip install
+pip freeze
+```
+
+以后随着项目反复使用，自然逐渐记住。
+
+#### ⚪ 复杂参数无需记忆
+
+例如：
+
+```text
+--short
+--untracked-files=all
+```
+
+现在只需要知道可以查询和使用，不要求默写。
+
+原则：
+
+> **理解工作流比背命令重要。**
+
+---
+
+### 今日能力状态
+
+#### 🟢 初步通过
+
+* `Path(__file__).parent`
+* 项目稳定文件路径
+* 理解相对路径与当前工作目录
+* 创建 `.venv`
+* 激活 / 退出虚拟环境
+* 理解 venv 的核心作用
+* 使用 pip 安装第三方包
+* `requirements.txt`
+* `.gitignore`
+* 验证 Git ignore
+* 完成一次有意义的 Git commit
+
+#### 🟡 继续巩固
+
+* pathlib 独立书写
+* venv / pip 相关命令熟练度
+* 不看提示重新建立项目环境
+* Git 命令熟练度
+* 对依赖关系的理解
+* 多文件项目整体数据流
+
+这些内容目前属于：
+
+> **第一次完整操作成功，不等于已经熟练掌握。**
+
+---
+
+### 今日最终进度
+
+**W38 今日核心任务：100% 完成 ✅**
+
+当前 W38 已推进：
+
+```text
+Module / import                 ✅ 初步通过
+多文件职责划分                   ✅ 初步通过
+多文件 Todo 运行                ✅ 初步通过
+pathlib / 文件路径              ✅ 初步通过
+venv                            ✅ 初步通过
+pip                             ✅ 初步使用
+requirements.txt                ✅ 初步通过
+.gitignore                      ✅ 初步通过
+Git 持续实操                    ✅ 第二次真实 Commit
+```
+
+### 下一步
+
+下一阶段继续 W38：
+
+```text
+.env / API Key 安全
+↓
+try / except 边界继续强化
+↓
+Git branch / merge 基础
+↓
+W38 Gate 检查
+```
+
+如果 W38 Gate 达标，则不等待自然周结束，直接滚动进入：
+
+```text
+W39
+→ SQLite / SQL
+→ HTTP POST / headers / auth
+→ 第一次 LLM API
+```
+
+今天的重点不是“背下很多新命令”，而是第一次真正理解：
+
+> **一个 Python 项目除了代码，还存在运行环境、依赖、文件路径和版本管理。**
+## 2026-09-20｜周日轻量复习总结
+
+### 今日定位
+
+今天没有继续推进新知识，按计划做了一个**低强度复习日**。
+
+目标不是继续赶进度，而是检查这一周已经学过的内容：
+
+> 哪些已经能自己讲出来，哪些只是见过但还没有真正记牢。
+
+今天没有进入：
+
+```text
+HTTP POST
+Auth / Headers
+LLM API
+Git Branch / Merge
+新的 SQLite 知识
+```
+
+---
+
+### 1. 项目分层复习
+
+能够自己说明：
+
+```text
+main.py
+→ 项目主程序 / 程序入口
+→ 负责整体流程和用户交互
+
+todo.py
+→ 业务逻辑层
+→ 负责 Todo 的查看、添加、完成、删除等业务操作
+
+storage_sqlite.py
+→ 数据存储 / 数据访问层
+→ 负责连接数据库和执行 SQL
+
+todos.db
+→ SQLite 数据库文件
+→ 真正保存 Todo 数据
+```
+
+已经能够理解完整结构：
+
+```text
+main.py
+↓
+todo.py
+↓
+storage_sqlite.py
+↓
+todos.db
+```
+
+状态：**🟢**
+
+---
+
+### 2. `.venv` / `requirements.txt` / `.gitignore`
+
+能够自己说明：
+
+```text
+.venv
+→ 项目的独立 Python 环境
+
+requirements.txt
+→ 项目所需要的第三方依赖和版本清单
+
+.gitignore
+→ 告诉 Git 哪些文件不要跟踪
+```
+
+进一步修正：
+
+不是所有一次性 Python 小脚本都必须创建虚拟环境，但长期开发的正式项目通常应该使用独立环境。
+
+`.gitignore` 更准确的说法不是：
+
+```text
+“不上传的文件”
+```
+
+而是：
+
+```text
+“不让 Git 跟踪的文件”
+```
+
+状态：**🟢**
+
+---
+
+### 3. `.env` 与环境变量
+
+能够记住：
+
+```text
+.env
+→ 用于保存配置
+→ 常见包括 API Key、数据库密码等敏感信息
+```
+
+但对下面两个还不够熟：
+
+```python
+load_dotenv()
+os.getenv()
+```
+
+重新复习完整链路：
+
+```text
+.env
+↓
+load_dotenv()
+↓
+把 .env 内容加载进当前程序的环境变量
+↓
+os.getenv()
+↓
+Python 获取具体的变量值
+```
+
+例如：
+
+```env
+OPENAI_API_KEY=abc123
+```
+
+之后：
+
+```python
+load_dotenv()
+
+api_key = os.getenv("OPENAI_API_KEY")
+```
+
+得到：
+
+```text
+abc123
+```
+
+状态：**🟡**
+
+---
+
+### 4. 异常处理复习
+
+重新回忆：
+
+```python
+FileNotFoundError
+```
+
+与：
+
+```python
+JSONDecodeError
+```
+
+为什么采取不同处理方式。
+
+#### FileNotFoundError
+
+文件不存在可能只是：
+
+> Todo 第一次运行，还没有创建数据文件。
+
+因此可以：
+
+```python
+return []
+```
+
+把它当成：
+
+```text
+当前没有任务
+```
+
+程序继续运行。
+
+#### JSONDecodeError
+
+代表：
+
+> 文件已经存在，但是内容损坏 / JSON 格式错误。
+
+此时不能直接：
+
+```python
+return []
+```
+
+否则程序可能错误地认为数据全部为空，并在之后覆盖原来的数据。
+
+因此：
+
+```python
+raise
+```
+
+把错误继续抛出，让正常流程停止。
+
+今天能够记起核心逻辑，但对 `raise` 这个词还不够稳定。
+
+状态：**🟡 → 接近 🟢**
+
+---
+
+### 5. 文件路径问题
+
+这部分记忆比较稳定。
+
+能够解释：
+
+```python
+DATA_FILE = "todos.json"
+```
+
+会根据：
+
+```text
+当前工作目录 CWD
+```
+
+寻找文件，而不是自动根据 Python 文件所在的位置寻找。
+
+因此如果从不同目录启动程序，可能：
+
+```text
+读取错误的 todos.json
+甚至创建多个 todos.json
+```
+
+更稳的写法：
+
+```python
+from pathlib import Path
+
+BASE_DIR = Path(__file__).parent
+DATA_FILE = BASE_DIR / "todos.json"
+```
+
+逻辑：
+
+```text
+先找到当前 Python 文件本身的位置
+↓
+再定位同目录下的数据文件
+```
+
+状态：**🟢**
+
+同时发现昨天 SQLite 代码：
+
+```python
+DB_FILE = "todos.db"
+```
+
+存在同样的问题。
+
+后续 Todo SQLite 整合时应该改成：
+
+```python
+BASE_DIR = Path(__file__).parent
+DB_FILE = BASE_DIR / "todos.db"
+```
+
+---
+
+### 6. Git 基础复习
+
+能够比较完整地说明：
+
+```text
+git add
+→ 把改动放进暂存区
+
+git commit
+→ 保存一次本地版本记录
+
+git push
+→ 把本地提交推送到远程仓库 / GitHub
+```
+
+同时记得：
+
+```text
+M = Modified
+→ Git 已跟踪的文件发生了修改
+
+U = Untracked
+→ 当前文件还没有被 Git 跟踪
+```
+
+进一步修正：
+
+`git add` 的正式概念尽量记成：
+
+```text
+暂存区 / staging area
+```
+
+而不是“准备上传区”。
+
+状态：**🟢**
+
+---
+
+### 7. SQLite 核心概念复习
+
+能够自己说明：
+
+```text
+conn
+→ Python 与数据库之间的连接
+
+cursor
+→ 数据库操作工具，用来执行 SQL、获取查询结果
+
+commit
+→ 将数据库修改真正保存下来
+```
+
+CRUD 已经能够比较稳定地区分：
+
+```text
+SELECT
+→ 查询 / 读取
+
+INSERT
+→ 新增
+
+UPDATE
+→ 修改
+
+DELETE
+→ 删除
+```
+
+`WHERE`：
+
+```text
+→ 限制 SQL 操作哪些数据
+```
+
+例如：
+
+```sql
+WHERE id = 2
+```
+
+表示只针对：
+
+```text
+id = 2
+```
+
+也可以：
+
+```sql
+WHERE completed = 0
+```
+
+限制到所有未完成任务。
+
+状态：**🟢**
+
+---
+
+### 今日复习结果
+
+目前这一周比较稳定的内容：
+
+```text
+🟢 项目分层
+🟢 main / todo / storage 职责
+🟢 venv
+🟢 requirements.txt
+🟢 .gitignore
+🟢 CWD 与 pathlib 路径问题
+🟢 Git add / commit / push
+🟢 Git M / U
+🟢 SQLite 基础结构
+🟢 conn / cursor / commit 基础作用
+🟢 CRUD
+🟢 WHERE
+🟢 数据库 id 与 Python index 的区别
+```
+
+还需要后续在真实代码里继续重复：
+
+```text
+🟡 .env → load_dotenv() → os.getenv()
+🟡 raise
+🟡 conn / cursor 更精确的概念
+🟡 SQL 从空白状态自己写出来
+🟡 __name__ == "__main__"
+```
+
+---
+
+### 本周复习后的判断
+
+这一周已经不再只是学习零散的 Python 语法，而是开始形成一个完整的小型软件结构认知：
+
+```text
+程序入口
+↓
+业务逻辑
+↓
+数据访问层
+↓
+数据库
+```
+
+同时也开始理解一个项目周围的工程环境：
+
+```text
+虚拟环境
+依赖管理
+Git
+.gitignore
+.env
+文件路径
+异常处理
+数据库
+```
+
+今天没有增加学习负担，而是通过回忆检查发现：
+
+> **项目分层、Git、路径、SQLite CRUD 已经开始稳定；环境变量和异常处理还需要以后在真实项目里继续重复。**
+
+### 下一次正式学习
+
+下一步优先：
+
+```text
+修正 todos.db 路径
+↓
+把 storage_sqlite.py 接回 Todo 项目
+↓
+真正通过菜单完成：
+查看 / 添加 / 完成 / 删除
+↓
+完成 SQLite Todo 整合
+```
+
+完成以后，再进入：
+
+```text
+HTTP POST
+→ Headers / Auth
+→ LLM API
+```
+
+今天的周日轻量复习完成。

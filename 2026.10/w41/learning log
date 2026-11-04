@@ -1,0 +1,1615 @@
+## W41 学习日志｜2026-10-06｜周二
+
+### 今日主题
+
+复习 W38–W40 的核心代码链路，重点检查自己是否能从空白写出 `LLM API → JSON → SQLite`，并重新理解 `parser / Pydantic / validator / logging` 的职责。
+
+---
+
+### 我独立完成的部分
+
+- 闭卷进行了约 **23 分钟**的 `LLM API + SQLite` 空白复现。
+- 能独立回忆并写出部分主流程：
+  - `input()`
+  - 本地 LM Studio `/v1/chat/completions` 地址
+  - `requests.post(url, json=data)`
+  - `response.json()`
+  - `sqlite3.connect("chat.db")`
+  - `conn.cursor()`
+  - `CREATE TABLE IF NOT EXISTS`
+  - `id INTEGER PRIMARY KEY`
+  - `question TEXT`
+  - `answer TEXT`
+  - `commit()`
+  - `close()`
+- 能回忆程序整体目标：
+  `用户输入 → LLM → 得到回答 → SQLite 保存`
+- 能判断创建 SQLite 表需要使用 `CREATE TABLE`。
+- 复习过程中能够识别 `parser.py / models.py / validator.py / logger_config.py` 分别属于不同职责。
+
+---
+
+### 有你提示后完成的部分
+
+- `requests.post()` 与 `json.loads()` 的区别重新确认。
+- `response.status_code == 200` 的写法。
+- OpenAI 兼容返回结构：
+  ```python
+  result["choices"][0]["message"]["content"]
+  ```
+- `sqlite3.connect()` 的正确大小写和调用形式。
+- `conn.cursor()` 需要 `()` 调用函数。
+- `CREATE TABLE` 的完整基本结构。
+- 数据库文件 `chat.db` 与数据库表 `chats` 的区别。
+- 理解同一个 `cursor` 可以连续执行多个 `execute()`，不需要因为执行多条 SQL 就重新定义函数。
+- 重新理解：
+  ```python
+  data = parse_json(content)
+  result = validate(data)
+  ```
+  属于普通的：
+  ```text
+  返回值 = 函数(输入)
+  ```
+- 重新理解：
+  ```python
+  AIResponse(**data)
+  ```
+  中 `**data` 是把字典展开成关键字参数。
+
+---
+
+### 你直接给出、我只是运行 / 对照的代码
+
+今天复习后直接看了完整参考链路，包括：
+
+```text
+SQLite connect
+→ CREATE TABLE
+→ input
+→ url + data
+→ POST
+→ status_code
+→ response.json()
+→ choices[0]["message"]["content"]
+→ INSERT
+→ commit
+→ SELECT
+→ fetchall
+→ close
+```
+
+直接参考了以下代码骨架：
+
+```python
+response = requests.post(url, json=data)
+```
+
+```python
+if response.status_code == 200:
+    result = response.json()
+```
+
+```python
+answer = result["choices"][0]["message"]["content"]
+```
+
+```python
+conn = sqlite3.connect("chat.db")
+cursor = conn.cursor()
+```
+
+```python
+cursor.execute(
+    "INSERT INTO chats (question, answer) VALUES (?, ?)",
+    (question, answer)
+)
+conn.commit()
+```
+
+```python
+cursor.execute("SELECT * FROM chats")
+rows = cursor.fetchall()
+```
+
+以及 Pydantic 测试中的：
+
+```python
+data = parse_json(content)
+result = validate(data)
+```
+
+因此这些不能作为今天的独立复现证据。
+
+---
+
+### 我现在讲不清的地方（解释债）
+
+- Python `dict {}`、`list []`、`key: value` 在复杂 `data / messages` 中如何从空白组织。
+- 为什么完整 LLM 请求中的 `messages` 必须是 list，里面为什么又是 dict。
+- `CREATE TABLE / INSERT / SELECT` 的 SQL 语法仍不能稳定从记忆中完整写出。
+- `parser → validator → models` 当前虽然能理解职责，但还不能从空白自己设计出来。
+- `Pydantic BaseModel` 的具体工作机制目前只理解到“按照类型规则校验数据”。
+- `ValidationError` 尚未学习和实际处理。
+- `parser` 返回 `None` 后，`main` 的完整错误处理、日志、重试方案还没有完成。
+- logging 的 `basicConfig()` 具体参数不要求默写，目前只理解用途和 INFO / WARNING / ERROR。
+
+---
+
+### 今日真实 Bug
+
+#### Bug 1：把 `json.loads()` 当成 HTTP 请求
+
+**现象：**
+
+写成类似：
+
+```python
+response = json.loads(question)
+```
+
+**我的猜测：**
+
+记得 JSON 和请求有关，但混淆了两者职责。
+
+**真正原因：**
+
+`json.loads()` 是：
+
+```text
+JSON 字符串 → Python 数据
+```
+
+发送 HTTP 请求应该用：
+
+```python
+requests.post(...)
+```
+
+**是否自己定位：** 否，需要提示。
+
+---
+
+#### Bug 2：LLM 返回数据访问方式错误
+
+**现象：**
+
+曾写成：
+
+```python
+result.choices[0].message.content
+```
+
+以及：
+
+```python
+["result"]["choices"][0]...
+```
+
+**真正原因：**
+
+`response.json()` 当前得到的是 Python `dict + list`，应该使用：
+
+```text
+dict → ["key"]
+list → [0]
+```
+
+正确访问路径为：
+
+```python
+result["choices"][0]["message"]["content"]
+```
+
+**是否自己定位：** 否，需要提示。
+
+---
+
+#### Bug 3：SQLite 连接语法不稳定
+
+**现象：**
+
+出现：
+
+```python
+sqlite3.Connection
+sqlite3.Connect
+conn.cursor
+```
+
+**真正原因：**
+
+正确调用为：
+
+```python
+sqlite3.connect(...)
+conn.cursor()
+```
+
+函数调用遗漏 `()`，并混淆了大小写。
+
+**是否自己定位：** 否，需要提示。
+
+---
+
+#### Bug 4：数据库文件和表名混淆
+
+**现象：**
+
+闭卷时写出：
+
+```sql
+CREATE TABLE IF NOT EXISTS chat.db
+```
+
+**真正原因：**
+
+`chat.db` 是 SQLite 数据库文件；
+
+`chats` 才是数据库里的表。
+
+**是否自己定位：** 否，复盘时指出。
+
+---
+
+#### Bug 5：执行顺序不完整
+
+**现象：**
+
+闭卷代码里较早写出了：
+
+```python
+commit()
+close()
+```
+
+但 `INSERT / SELECT / fetchall` 尚未完成。
+
+**真正原因：**
+
+目前记住了各个操作名称，但：
+
+```text
+connect
+→ cursor
+→ CREATE
+→ INSERT
+→ commit
+→ SELECT
+→ fetchall
+→ close
+```
+
+还没有形成稳定的完整顺序。
+
+**是否自己定位：** 部分意识到程序还没写完，但未完整定位顺序问题。
+
+---
+
+### 各项能力等级及依据
+
+| 能力 | 当前等级 | 依据 |
+|---|---|---|
+| `input()` | 🟡 | 能闭卷写出；缺口头讲解和 Debug 证据 |
+| `requests.post()` | 🟡 | 闭卷可回忆，前期曾与 `json.loads()` 混淆 |
+| `response.status_code` | 🟡 | 提示后恢复，未独立稳定复现 |
+| `response.json()` | 🟡 | 闭卷能写出，但和 `json.loads()` 区别仍需巩固 |
+| LLM 嵌套 JSON 取值 | 🔴 | 闭卷没有稳定写出，访问方式出现多次错误 |
+| Python dict / list 嵌套 | 🔴 | `data / messages` 闭卷组织失败 |
+| SQLite connect / cursor | 🟡 | 能回忆主要结构，但出现大小写和 `()` 错误 |
+| CREATE TABLE | 🟡 | 能回忆关键词和字段类型，完整语法需要参考 |
+| INSERT 参数化 SQL | 🔴 | 本次闭卷未写出 |
+| SELECT / fetchall | 🔴 | 本次闭卷未写出 |
+| 完整 LLM → SQLite 数据流 | 🟡 | 能讲大体方向，但空白实现未完成 |
+| 模块化职责 | 🟡 | 能理解 `main / parser / storage` 等职责，未重新独立设计 |
+| JSON 解析异常处理 | 🟡 | 能看懂 `try / except JSONDecodeError`，未闭卷复现 |
+| Pydantic Model | 🟡 | 能理解字段类型规则和 `AIResponse(**data)`，独立调用仍需提示 |
+| logging | 🟡 | 能解释用途和等级；未做独立复现 |
+| pytest | ⚪ | 尚未开始 |
+| 云端 LLM API | ⚪ | 尚未补 401 / 429 / usage / cost 验证 |
+
+> 今天没有任何能力标记为 🟢。当前缺少“空白复现 + 口头讲解 + 故障定位”三项完整证据。
+
+---
+
+### 待验证项
+
+下次优先验证：
+
+1. 不看旧代码，独立写出：
+   ```python
+   data = {
+       "model": ...,
+       "messages": [
+           {
+               "role": ...,
+               "content": ...
+           }
+       ]
+   }
+   ```
+2. 独立写：
+   ```python
+   response = requests.post(...)
+   result = response.json()
+   answer = ...
+   ```
+3. 独立写 SQLite 最小 CRUD 骨架：
+   ```text
+   connect
+   cursor
+   CREATE
+   INSERT
+   commit
+   SELECT
+   fetchall
+   close
+   ```
+4. 口头解释：
+   ```text
+   用户输入
+   → HTTP Request
+   → LLM
+   → HTTP Response
+   → JSON
+   → answer
+   → SQLite
+   ```
+5. Debug 测试：
+   - `json.loads()` / `response.json()` 混淆
+   - dict/list 层级错误
+   - `sqlite3.connect()` 错误
+   - 数据库名与表名混淆
+6. Pydantic 最小复现：
+   - 自己写一个 `BaseModel`
+   - 正确数据通过
+   - 错误 `confidence` 被拒绝
+   - 能解释 parser 与 Pydantic 分别负责什么
+
+### 今日结束位置
+
+今天主要完成 **W38–W40 恢复性复习 + 一次 23 分钟空白测试 + Pydantic/Parser/Validator/Logging 重新讲解**。
+
+下一次仍先补当前 🟡 / 🔴 项，不直接进入 FastAPI。
+
+## W41 Learning Log｜2026-10-07｜周三
+
+### 今日主题
+
+把 **Pydantic → Parser / Validator → pytest → main 主流程 → SQLite** 串起来，理解结构化 LLM 数据从生成、解析、校验到入库的完整路径。
+
+---
+
+### 我独立完成的部分
+
+- 独立写出了最小 Pydantic Model：
+
+```python
+from pydantic import BaseModel
+
+class AIResponse(BaseModel):
+    summary: str
+    urgent: bool
+    confidence: float
+```
+
+- 独立创建了测试数据 `data`。
+- 知道需要把 `data` 交给 `AIResponse`，但第一次写成：
+
+```python
+AIResponse(data)
+```
+
+随后在提示后改为：
+
+```python
+AIResponse(**data)
+```
+
+- 实际运行并观察了：
+  - 正确数据通过 Pydantic。
+  - `confidence = "高"` 触发 `ValidationError`。
+  - 缺少 `urgent` 触发 `Field required`。
+  - 同时存在两个问题时，Pydantic 一次报告多个 validation errors。
+- 能用自己的话解释：
+  - `question` 是用户输入。
+  - `content` 是从 LLM API 响应中提取出的模型回复正文。
+  - `parser` 把 JSON 字符串转成 Python 数据。
+  - `validator` 检查数据是否符合规定。
+  - 校验失败后需要 `return`，避免错误数据继续进入下一阶段。
+- 理解了 SQLite 中：
+  - `INTEGER` 用于整数。
+  - `REAL` 用于小数。
+  - Python `bool` 经 `sqlite3` 写入 SQLite 时可表现为 `1 / 0`。
+
+---
+
+### 有你提示后完成的部分
+
+- `AIResponse(**data)` 中 `**data` 的字典展开。
+- `ValidationError` 的含义和使用范围。
+- 区分：
+  - `NameError`
+  - `ValidationError`
+  - `JSONDecodeError`
+  - `KeyError`
+  - HTTP / SQLite 类错误
+- 理解：
+
+```text
+一个 ValidationError
+可以包含多个具体字段错误
+```
+
+- 理解：
+
+```text
+parser
+= 解析器，负责“读不读得懂”
+
+validator
+= 校验器，负责“合不合格”
+
+model
+= 数据规则
+```
+
+- 使用：
+
+```python
+try:
+    ...
+except ValidationError as e:
+    ...
+```
+
+代替过于宽泛的：
+
+```python
+except Exception:
+```
+
+- pytest 基础概念：
+  - `test_` 函数
+  - `assert`
+  - PASS / FAIL
+  - 回归测试
+- `main.py` 的整体职责：
+  - 调用各模块
+  - 接收返回值
+  - 检查失败状态
+  - 决定是否继续
+- `if __name__ == "__main__":` 的基本作用。
+- SQLite 结构化存储：
+  - 新增 `analyses` 表
+  - `init_db()`
+  - `save_analysis()`
+  - `get_analyses()`
+  - 先校验再入库。
+
+---
+
+### 你直接给出、我只是参考 / 运行的代码
+
+以下代码主要由你直接提供，不能算我的独立编码证据：
+
+- pytest 的 `test_parser.py`
+- pytest 的 `test_validator.py`
+- `main.py` 的完整串联代码
+- `storage.py` 中：
+  - `analyses` 建表
+  - `save_analysis()`
+  - `get_analyses()`
+- logging 输出结构
+- `isinstance()` 的检查逻辑
+- `if __name__ == "__main__": main()`
+
+今天我口头确认完成了后续项目修改，但没有提供最终运行截图，因此：
+
+> **Mini Project 完整运行、SQLite 实际新增记录、最终 pytest 全通过，本日志暂不作为已验证证据。**
+
+---
+
+### 我现在讲不清的地方（解释债）
+
+- `**data` 已理解用途，但是否能隔天从空白主动写出仍未验证。
+- `ValidationError` 与其他异常的分类已经理解，但还不能自己设计完整异常处理结构。
+- `isinstance(content, str)` / `isinstance(data, dict)` 目前主要是看懂，未独立使用。
+- `main.py` 的整体数据流能解释，但暂时不能从空白完整组织出来。
+- `if __name__ == "__main__":` 能理解用途，不要求当前默写。
+- pytest 能理解 `assert` 和 PASS / FAIL，但测试代码主要是参考后完成。
+- SQLite `CREATE / INSERT / SELECT` 的具体语法仍是之前的薄弱项。
+- `storage.py` 如何由自己从需求独立设计出来尚未验证。
+- 数据库异常、LLM HTTP 异常还没有真正接入当前主流程。
+- 当前 `parser.py` / `validator.py` 失败时仍有 `print`，logging 尚未完全统一。
+
+---
+
+### 今日真实 Bug
+
+#### Bug 1：Pydantic 初始化方式错误
+
+**现象：**
+
+```python
+result = AIResponse(data)
+```
+
+**真正原因：**
+
+`data` 是 dict，而当前 Model 需要按照字段名接收参数。
+
+正确形式：
+
+```python
+result = AIResponse(**data)
+```
+
+**是否自己定位：** 否，需要提示。
+
+---
+
+#### Bug 2：字符串忘记加引号
+
+**现象：**
+
+```python
+"confidence": 高
+```
+
+出现：
+
+```text
+NameError: name '高' is not defined
+```
+
+**真正原因：**
+
+没有引号时，Python 把 `高` 当作变量名，而不是字符串。
+
+**是否自己定位：** 否，需要提示。
+
+---
+
+#### Bug 3：Pydantic 类型错误
+
+**现象：**
+
+```python
+"confidence": "高"
+```
+
+而 Model 要求：
+
+```python
+confidence: float
+```
+
+出现：
+
+```text
+ValidationError
+Input should be a valid number
+```
+
+**真正原因：**
+
+Python 数据本身合法，但不符合 Pydantic 数据规则。
+
+**是否自己定位：** 运行后能理解原因。
+
+---
+
+#### Bug 4：缺少必填字段
+
+**现象：**
+
+删除：
+
+```python
+"urgent": True
+```
+
+出现：
+
+```text
+urgent
+Field required
+```
+
+**真正原因：**
+
+`urgent: bool` 在当前 Model 中是必填字段。
+
+**是否自己定位：** 实验后能解释原因。
+
+---
+
+### 各项能力等级及依据
+
+| 能力 | 当前等级 | 依据 |
+|---|---|---|
+| Pydantic `BaseModel` 基础 | 🟡 | 能独立写简单 Model，但未完成空白复现 + Debug 全套 |
+| `AIResponse(**data)` | 🟡 | 理解并成功使用，但第一次遗漏 `**` |
+| `ValidationError` | 🟡 | 能解释用途并观察实际错误，异常设计仍需提示 |
+| Parser / Validator 区分 | 🟡 | 已能口头解释职责 |
+| `try / except ValidationError` | 🟡 | 理解为什么精确捕获，主要代码由参考完成 |
+| pytest 基础 | 🟡 | 理解 test / assert / PASS / FAIL，测试代码非独立完成 |
+| 回归测试概念 | 🟡 | 能理解“修改后防止旧功能被破坏” |
+| main 主流程理解 | 🟡 | 能解释数据流，但完整代码由参考提供 |
+| `return` 错误截断 | 🟡 | 能口头解释为什么失败后不能继续 |
+| logging | 🟡 | 能理解用途，未独立组织 |
+| SQLite 数据类型 | 🟡 | 能解释 TEXT / INTEGER / REAL |
+| bool → SQLite 0/1 | 🟡 | 理解 sqlite3 的类型适配 |
+| SQLite 结构化入库 | 🟡 | 理解“先校验再入库”，代码主要由参考提供 |
+| 独立完成当前 Mini Project | 🔴 | 尚无空白复现证据 |
+| 完整异常处理设计 | 🔴 | HTTP / DB / JSON / Validation 尚未自己统一设计 |
+
+> 今日没有能力标记为 🟢。缺少完整的“空白复现 + 口头讲解 + 故障定位”证据。
+
+---
+
+### 待验证项
+
+下一次优先验证：
+
+1. 不看代码，写一个最小 `BaseModel` 并使用 `**data`。
+2. 给一份错误数据，判断属于 `JSONDecodeError`、`ValidationError` 还是 Python 本身的错误。
+3. 自己解释并画出：
+
+```text
+question
+→ LLM
+→ content
+→ parser
+→ data
+→ validator
+→ result
+→ SQLite
+```
+
+4. 不看参考写最小 pytest：
+
+```python
+def test_xxx():
+    result = ...
+    assert ...
+```
+
+5. Debug 一个故意损坏的 parser / validator 测试。
+6. 验证当前 Mini Project：
+   - LLM 正常运行
+   - Pydantic 校验
+   - SQLite 实际新增记录
+   - pytest 全部通过
+7. 后续补：
+   - HTTP 请求异常
+   - SQLite 异常
+   - logging 统一替代错误路径中的 `print`
+
+### 今日结束位置
+
+今天完成了：
+
+```text
+Pydantic
+→ ValidationError
+→ parser / validator
+→ pytest
+→ main 主流程
+→ SQLite 结构化存储
+```
+
+下一次继续 **W40 Mini Project 收尾与错误处理 / 测试验证**，暂不直接进入 FastAPI。
+# W41 Learning Log｜2026-10-08｜周四
+
+## 一、今日主题
+
+**完成 Mini Project 从本地 LM Studio 到 DeepSeek 官方云端 API 的迁移，并学习 HTTP 异常处理、Token 用量统计和 Mock 自动化测试。**
+
+今日重点：云端 API 接入、环境变量、HTTP 异常分类、错误日志和测试思路。
+
+---
+
+## 二、我独立完成的部分
+
+### 1. 云端 API 实际运行
+
+在原有 `llm_api_practice` 项目中，完成了 DeepSeek 官方 API 的接入与运行。
+
+终端实际输出：
+
+```text
+INFO Token 用量：
+prompt_tokens: 102
+completion_tokens: 23
+total_tokens: 125
+
+INFO 数据处理成功
+INFO 总结：用户发来问候
+INFO 分类：其他
+INFO 紧急：False
+INFO 置信度：0.99
+```
+
+这证明本次调用至少完成了：
+
+- DeepSeek 云端 HTTP 请求
+- 获取模型回复正文
+- JSON 解析
+- Pydantic 校验
+- logging 输出
+- 读取 API 返回的 Token usage
+
+**注意：完整请求代码由 ChatGPT 提供，实际运行成功不等于能够独立编写。**
+
+### 2. 主动提出的问题
+
+针对现有代码，主动识别并询问了以下不理解的部分：
+
+- `return None` 与直接 `return` 的区别
+- `rstrip("/")`
+- `Bearer` 和 `Content-Type`
+- `stream`
+- `raise_for_status()`
+- `type(e).__name__`
+- `or not content.strip()`
+- `patch`
+- `side_effect`
+- `return_value`
+- `caplog`
+
+这些问题反映出当前主要困难集中在 Python 函数调用、异常处理、HTTP 配置与测试工具的实际理解上。
+
+---
+
+## 三、有 ChatGPT 提示后完成的部分
+
+### 1. `.env` 配置修复
+
+最初配置中，多行使用了同一个变量名 `DEEPSEEK_API_KEY`，导致程序无法读取 Base URL 和 Model。
+
+在提示后调整为三个不同名称：
+
+```dotenv
+DEEPSEEK_API_KEY=密钥（不记录真实值）
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=实际使用的模型ID
+```
+
+随后成功完成云端请求。
+
+### 2. 理解云端 API 新增代码
+
+重新理解：
+
+- `Path(__file__).resolve().parent`：定位当前文件所在目录
+- `load_dotenv()`：加载环境配置
+- `os.getenv()`：获取环境变量
+- `Authorization: Bearer`：携带 API 身份凭证
+- `Content-Type: application/json`：声明请求体格式
+- `rstrip("/")`：去掉 URL 末尾的斜杠
+- `stream=False`：等待模型一次性返回完整响应
+- `raise_for_status()`：将 HTTP 4xx/5xx 状态转换为异常
+- `timeout=(10, 90)`：分别设置连接和读取超时
+- `type(e).__name__`：取得异常类型名称
+- `strip()`：去除字符串两端空白
+- `or not`：组合错误检查条件
+
+### 3. HTTP 异常分类
+
+理解以下异常的区别：
+
+```text
+Timeout
+→ 请求超时
+
+HTTPError
+→ 已获得 HTTP 错误状态，例如 401、429、500
+
+RequestException
+→ requests 网络异常的共同父类
+```
+
+理解多个 `except` 不会全部执行，而是按顺序匹配异常。
+
+### 4. Mock 基本概念
+
+理解：
+
+```text
+patch
+→ 临时替换真实函数
+
+side_effect
+→ 可以模拟函数抛出异常
+
+return_value
+→ 规定模拟函数返回什么
+
+caplog
+→ 捕获 logging 日志
+```
+
+但目前主要停留在理解说明和对照参考代码阶段。
+
+---
+
+## 四、ChatGPT 直接提供、我只是参考或使用的代码
+
+本日主要由 ChatGPT 提供：
+
+1. DeepSeek 云端版 `llm.py` 的完整参考代码。
+2. `.env` 配置结构及 Git 忽略规则。
+3. `requests.post()` 的超时、HTTPError、RequestException 异常处理。
+4. `response.raise_for_status()` 的处理流程。
+5. `usage` Token 统计。
+6. 三个 HTTP Mock 测试：
+   - Timeout
+   - HTTP 401
+   - HTTP 429
+7. `raise` 主动制造异常的练习程序。
+
+因此，以上代码不能计入独立空白编写证据。
+
+---
+
+## 五、我现在讲不清的地方（解释债）
+
+### 🔴 需要优先补
+
+**1. `try / except` 独立编写**
+
+能理解大致作用，但面对空白文件，尚不能稳定写出多异常分支及相应处理。
+
+**2. Mock 测试代码**
+
+特别是：
+
+```python
+with patch(
+    "llm.requests.post",
+    side_effect=...
+):
+```
+
+和：
+
+```python
+with patch(
+    "llm.requests.post",
+    return_value=...
+):
+```
+
+目前理解两者含义，但还不能独立组织完整测试。
+
+### 🟡 需要继续巩固
+
+- `raise` 与 `return` 的区别
+- `raise_for_status()` 和异常捕获之间的关系
+- 为什么不同异常需要不同处理方式
+- `requests.Response()` 与实际 HTTP 响应
+- `isinstance()`、`strip()`、`or not` 组合判断
+- 如何根据 HTTP 状态码决定是否重试
+- 如何将 Token usage 转成实际成本
+- 模型输出为空、JSON 解析失败与网络失败的区别
+
+### 当前不要求默写
+
+- Mock 的完整配置语法
+- `caplog` 的高级用法
+- logging 格式字符串
+- requests 内部异常类的继承细节
+
+---
+
+## 六、今日真实 Bug
+
+### Bug 1：环境变量名称重复
+
+**现象：**
+
+```text
+ERROR DeepSeek API 配置不完整
+ERROR LLM 没有返回有效文本
+```
+
+**最初问题：**
+
+`.env` 中多行使用 `DEEPSEEK_API_KEY`，没有分别定义 Base URL 和 Model。
+
+**真正原因：**
+
+`os.getenv()` 按变量名读取环境变量。名称不匹配，配置检查失败，程序提前返回 `None`。
+
+**是否自己定位：** 否，由 ChatGPT 指出并指导修复。
+
+**结果：** 修复后云端请求成功。
+
+### Bug 2：A6API 云端请求超时
+
+**现象：**
+
+```text
+ERROR 云端 API 请求超时
+```
+
+**真正原因：**
+
+尚未确认，可能涉及第三方网关、上游服务或网络。
+
+**是否自己定位：** 否。
+
+**处理结果：** 放弃继续排查 A6API，改用 DeepSeek 官方 API。
+
+### Bug 3：API Key 安全风险
+
+**现象：**
+
+`.env` 的真实 API Key 曾出现在截图中，文件在 VS Code 中显示 Git 未跟踪状态 `U`。
+
+**风险原因：**
+
+密钥可能通过截图或错误的 Git 提交方式泄露。
+
+**当前处理证据：**
+
+已学习 `.gitignore` 的配置方法，但未提供 Git 忽略规则生效的验证结果，也未确认此前暴露的密钥已撤销和轮换。
+
+**待处理：** 轮换泄露密钥，验证 `.env` 不会被 Git 跟踪。
+
+---
+
+## 七、各项能力等级及依据
+
+| 能力 | 状态 | 证据 |
+|---|---|---|
+| DeepSeek 云端 API 调用 | 🟡 | 实际运行成功，代码由参考提供 |
+| `.env` 环境变量 | 🟡 | 提示后修复配置错误 |
+| Authorization / Bearer | 🟡 | 理解作用，未独立编写验证 |
+| HTTP 请求异常处理 | 🟡 | 能理解分支，尚未闭卷复现 |
+| `try / except` | 🔴 | 完整独立编写仍不稳定 |
+| `raise_for_status()` | 🟡 | 理解作用，有实际代码使用 |
+| `return None` | 🟡 | 能解释与 `return` 的区别 |
+| 字符串处理 `strip/rstrip` | 🟡 | 理解用途 |
+| JSON + Pydantic | 🟡 | 云端数据通过实际校验 |
+| Token usage | 🟡 | 成功读取数值，尚未实现成本计算 |
+| pytest 基础 | 🟡 | 之前练习过，独立能力待验证 |
+| HTTP Mock 测试 | 🔴 | 主要是参考代码，理解不稳定 |
+| SQLite 完整入库 | 🟡 | 之前有集成练习，本日无新增记录查询证据 |
+| 独立维护完整 Mini Project | 🔴 | 仍缺空白复现和独立 Debug 证据 |
+
+**本日没有能力标记为 🟢。**
+
+---
+
+## 八、今日测试证据与未验证事项
+
+### 已观察到
+
+- DeepSeek 官方 API 调用成功。
+- 云端返回 Token usage。
+- Parser / Pydantic 处理成功。
+- Logging 输出结构化分析结果。
+
+### 尚未获得充分证据
+
+- HTTP 三项 Mock 测试是否实际通过。
+- 最后的 429 故障练习是否独立完成。
+- 当前项目完整 pytest 测试是否全部通过。
+- SQLite 是否实际新增并可查询结构化分析记录。
+- API Key 是否已安全轮换。
+- `.gitignore` 是否生效。
+
+以上不应在后续复盘时误记为已经完成。
+
+---
+
+## 九、待验证项（下一次学习）
+
+1. **闭卷练习 `try / except`**：写一个能分别处理 Timeout 和 HTTPError 的小函数。
+2. **故障定位**：给定一段 `raise_for_status()` 和 `except` 代码，独立判断会执行哪个分支。
+3. **解释 Mock 流程**：不看代码，解释 `patch`、`side_effect`、`return_value` 的区别。
+4. **项目验证**：运行现有 pytest，记录真实通过/失败数量。
+5. **SQLite 验证**：查看 `analyses` 表中是否实际保存本次云端输出。
+6. **API 安全检查**：验证 `.env` 被 Git 忽略并完成泄露密钥的轮换。
+7. **成本理解**：用实际 `usage` 和模型价格计算单次调用成本。
+8. **独立解释完整数据流**：
+
+```text
+.env
+↓
+DeepSeek API
+↓
+HTTP Response
+↓
+content
+↓
+JSON Parser
+↓
+Pydantic Validator
+↓
+SQLite
+↓
+Logging
+```
+
+---
+
+## 十、今日结束位置
+
+**2026-10-08｜W41 周四**
+
+本日完成的主要学习内容：
+
+```text
+本地 LLM → 云端 DeepSeek API
+          ↓
+环境变量与身份认证
+          ↓
+HTTP 异常处理
+          ↓
+Token usage
+          ↓
+结构化数据解析与校验
+          ↓
+HTTP Mock 测试概念
+```
+
+**下一次学习方向：**
+
+先验证已有 HTTP Mock 测试、SQLite 和 pytest 结果，巩固 `try / except`；随后进入 AI Coding / Codex 只读 Code Review，检查当前 Mini Project 的安全性、错误处理和测试质量。
+
+暂时不继续扩展 Mock 高级功能，也不因课程日期而强行进入 FastAPI。
+
+**当前阶段判定：W40 Mini Project 收尾与验证中；W41 云端 API 接入已有成功运行证据，核心能力仍待独立验收。**
+# W41 Learning Log｜2026-10-09｜周五
+
+## 一、今日主题
+
+**完成 AI Mini Project 的阶段性验证，学习 Git 版本管理与 Codex Code Review，并决定从 W42 开始转向项目驱动学习。**
+
+今日主要涉及：
+
+- Git 安全配置与版本管理
+- pytest HTTP Mock 测试
+- SQLite 数据验证
+- Git Diff / Commit / Log / Timeline
+- Codex 只读 Code Review
+- AI 工程学习路线调整
+
+---
+
+## 二、今日实际完成的内容
+
+### 1. Git 安全配置
+
+**已完成并验证：**
+
+此前 `.env` 显示 `??`，表示文件没有被 Git 跟踪，但也没有被忽略。
+
+通过检查发现 `.gitignore` 最初错误地放在 `.venv` 文件夹内，无法保护项目目录中的 `.env`。
+
+随后在 Git 仓库根目录：
+
+`D:\代码学习\.gitignore`
+
+建立正确的忽略规则。
+
+```gitignore
+# API 密钥
+**/.env
+
+# Python 虚拟环境
+.venv/
+
+# Python 缓存
+__pycache__/
+.pytest_cache/
+
+# SQLite 本地数据库
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+```
+
+`.env` 最终检查结果：
+
+```text
+.gitignore:2:**/.env
+!! 2026.09/w39/llm_api_practice/.env
+```
+
+确认 `.env` 已被 Git 忽略。
+
+随后根据 Codex 的审查意见，补充 SQLite 数据库忽略规则，并创建 Git Commit。
+
+Commit：
+
+`c899ac8` — 忽略本地 SQLite 数据库文件
+
+**尚缺证据：** 未看到补充规则后对 `chat.db` 执行 `git status --short --ignored` 的最终输出，因此数据库忽略规则已提交，但仍需确认实际命中。
+
+此外，曾在截图中暴露过真实 API Key。虽然现在 `.env` 已被 Git 忽略，但没有证据确认旧密钥已经在平台后台撤销并轮换。
+
+### 2. HTTP Mock 自动测试
+
+首次错误操作是直接运行：
+
+```powershell
+python test_llm_errors.py
+```
+
+出现：
+
+```text
+ModuleNotFoundError: No module named 'llm'
+```
+
+之后又遇到：
+
+```text
+No module named pytest
+```
+
+安装 pytest 后，回到正确项目目录执行：
+
+```powershell
+cd D:\代码学习\2026.09\w39\llm_api_practice
+
+python -m pytest -q tests/test_llm_errors.py
+```
+
+实际结果：
+
+```text
+3 passed in 0.11s
+```
+
+本次三个测试覆盖：
+
+| 测试 | 结果 |
+|---|---|
+| 模拟请求 Timeout | PASS |
+| 模拟 HTTP 401 | PASS |
+| 模拟 HTTP 429 | PASS |
+
+这些测试通过 Mock 替换实际 `requests.post()`，没有发起真实 DeepSeek API 请求。
+
+**证据边界：** 证明现有测试中的三个故障分支运行通过，不代表已经独立掌握 Mock 的编写方法，也不代表所有 HTTP 错误都已覆盖。
+
+完整测试套件 `python -m pytest -q` 的最新结果尚未提供。
+
+### 3. SQLite 数据库查询
+
+通过 Python 命令连接 `chat.db` 并查询 `analyses` 表。
+
+实际查询结果：
+
+```python
+[
+    (1, "你好", "用户发来问候", "其他", 0, 0.99)
+]
+```
+
+本次验证说明：
+
+- `analyses` 表实际存在。
+- 数据库中已经保存了一条分析记录。
+- `urgent=False` 在 SQLite 中表现为整数 `0`。
+- `confidence=0.99` 已保存为数值。
+
+数据库查询成功与之前的 DeepSeek 云端调用共同提供了 Mini Project 的功能证据。
+
+但尚未完成从不同工作目录运行程序的数据库路径一致性验证。
+
+---
+
+## 三、Git 版本管理实操
+
+这是今天投入较多时间的内容。
+
+### 1. 已实际接触的 Git 命令
+
+| 命令 | 用途 |
+|---|---|
+| `git status` | 查看工作区状态 |
+| `git check-ignore -v` | 验证忽略规则 |
+| `git add` | 选择进入暂存区的修改 |
+| `git diff` | 查看未暂存的修改 |
+| `git diff --cached` | 查看准备提交的修改 |
+| `git diff --check` | 检查部分空白字符问题 |
+| `git commit -m` | 创建有说明的 Git 版本 |
+| `git log --oneline` | 查看简洁的版本历史 |
+| `git show` | 已介绍，用于查看指定提交内容 |
+
+理解了：
+
+```text
+工作区 Working Directory
+          ↓ git add
+暂存区 Staging Area
+          ↓ git commit
+Git 仓库历史 Repository
+```
+
+实际练习了下面的固定操作流程：
+
+```text
+查看状态
+    ↓
+检查代码变化
+    ↓
+运行相关测试
+    ↓
+git add
+    ↓
+git diff --cached
+    ↓
+git commit
+    ↓
+git log
+```
+
+### 2. 创建的 Git 历史版本
+
+本次练习中确认的三个 Commit：
+
+| Commit | 内容 |
+|---|---|
+| `dca40f3` | 建立 DeepSeek API 基线 |
+| `01ca9c7` | 调整 DeepSeek API 超时时间 |
+| `c899ac8` | 忽略本地 SQLite 数据库文件 |
+
+其中 `llm.py` 的主要修改为：
+
+```diff
+- timeout=(10, 90)
++ timeout=(10, 130)
+```
+
+实际使用 `git diff` 检查到了这一修改。
+
+同时发现编辑过程中误加了多处 `#`，之后清理了多余修改。
+
+再次查看 Diff 时，只剩下预期的超时参数变化，以及删除文件开头空行的格式变化。
+
+### 3. 学习 Git Diff 的输出格式
+
+理解：
+
+- 红色 `-`：旧版本中删除的内容。
+- 绿色 `+`：新版本中新增的内容。
+- `@@ ... @@`：差异块所在的行号范围。
+- `new file mode`：新文件首次加入 Git。
+- `/dev/null`：比较时某一侧不存在对应文件。
+
+例如：
+
+```diff
+@@ -67,7 +66,7 @@ def chat(question):
+```
+
+含义：
+
+旧文件从第 67 行开始展示 7 行，新文件从第 66 行开始展示 7 行。
+
+本次差异中的行号偏移来自文件开头删除的一个空行。
+
+还接触了 `--cached`、`--oneline`、`-m`、`--short` 等命令选项。
+
+**目前不要求默写所有选项，重点是知道每条命令解决什么问题。**
+
+### 4. VS Code 图形化历史查看
+
+已实际通过 VS Code Timeline 打开两个 Commit 的比较。
+
+比较对象：
+
+```text
+llm.py (dca40f3a)
+        ↕
+llm.py (01ca9c7e)
+```
+
+在界面中直接看到：
+
+```diff
+- timeout=(10, 90)
++ timeout=(10, 130)
+```
+
+理解了两类记录的区别：
+
+- Git Commit：用户主动创建的版本历史。
+- VS Code Local History：编辑器本地保存的文件历史。
+
+本日已经能够在实际界面中找到并展示两个历史版本的差异。
+
+尚未练习 Git 的版本恢复操作，暂不使用 `reset`、`restore` 等可能覆盖代码的命令。
+
+---
+
+## 四、Codex Code Review 实战
+
+### 1. 本次审查方式
+
+通过 ChatGPT 提供的 Prompt，让 Codex 对 `llm_api_practice` 做只读代码审查。
+
+审查范围包括：
+
+- `llm.py`
+- `main.py`
+- `parser.py`
+- `validator.py`
+- `models.py`
+- `storage.py`
+- `logger_config.py`
+- 相关 pytest 测试
+- 根目录 `.gitignore`
+
+审查明确限制：
+
+- 不修改代码
+- 不执行真实云端 API 请求
+- 不读取 `.env` 密钥
+- 不读取数据库内容
+- 不安装依赖
+- 不运行会修改文件的程序
+
+Codex 报告：
+
+```text
+REVIEW_STATUS: COMPLETED
+
+VERDICT: 需要先修复重要问题
+```
+
+未报告 Critical 问题。
+
+### 2. Codex 找出的主要问题
+
+**问题 A：数据库没有被 Git 忽略**
+
+`chat.db` 存储用户问题和分析结果，如果误提交，可能泄露数据。
+
+处理进度：已增加忽略规则并 Commit；实际忽略命中仍待验证。
+
+**问题 B：数据库路径依赖启动目录**
+
+原始代码：
+
+```python
+DB_FILE = "chat.db"
+```
+
+当程序从不同目录启动时，可能连接不同位置的数据库。
+
+计划改为：
+
+```python
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+DB_FILE = BASE_DIR / "chat.db"
+```
+
+处理进度：已讨论修复方法，**未提供实际完成修改及测试的证据**。
+
+**问题 C：Pydantic 默认允许部分类型转换**
+
+例如字符串 `"0.95"` 可能被转换为浮点数 `0.95`。
+
+这不必然是错误，要根据业务规则决定是否启用严格校验。
+
+处理进度：已讨论，未提供实际修改及测试证据。
+
+### 3. 其他审查问题
+
+Codex 还报告：
+
+- SQLite 保存失败时缺少应用级错误处理。
+- Parser 和 Validator 使用 `print`，日志不统一。
+- Validator 捕获过宽的 `Exception`。
+- 缺少部分失败短路、数据库异常的自动化测试。
+
+这些仍属于待处理事项。
+
+---
+
+## 五、我独立完成、有提示完成及直接使用的内容
+
+### 独立操作或自行执行
+
+- 在 VS Code 中操作实际代码文件。
+- 运行 Git 命令并观察输出。
+- 修改 `llm.py` 的超时参数。
+- 在 VS Code Timeline 中查看真实 Commit 差异。
+- 执行 SQLite 查询命令并获得数据。
+- 将 Codex 审查报告返回 ChatGPT 进行第二轮分析。
+
+这些属于实际操作证据，不能全部等同于独立设计或编写能力。
+
+### 在 ChatGPT 指导后完成
+
+- 修正 `.gitignore` 的目录位置。
+- 配置并验证 Git 忽略规则。
+- 正确安装及运行 pytest。
+- 解释 Git Diff、Commit、Log 和各类选项。
+- 使用 Timeline 比较两个历史版本。
+- 判断 Codex 的审查结论和修复优先级。
+
+### ChatGPT / Codex 直接提供的内容
+
+- Git 操作命令与文件路径。
+- SQLite 查询命令。
+- HTTP Mock 测试参考代码。
+- 只读 Code Review Prompt。
+- `storage.py` 路径修复参考方案。
+- Pydantic 严格类型校验建议。
+
+这些不能计入独立空白编写能力。
+
+---
+
+## 六、今日真实 Bug 与问题定位
+
+### Bug 1：Git 忽略规则没有生效
+
+**现象：** `.env` 在 Git 中显示 `??`。
+
+**原因：** `.gitignore` 放在 `.venv` 内，而不是实际仓库根目录。
+
+**定位方式：** ChatGPT 根据截图指出。
+
+**修复结果：** 新建根目录 `.gitignore`，验证 `.env` 显示 `!!`。
+
+### Bug 2：pytest 运行失败
+
+**现象：**
+
+```text
+ModuleNotFoundError: No module named 'llm'
+```
+
+**原因：** 直接运行 `tests/test_llm_errors.py`，导入路径不符合项目预期。
+
+另外，当前 Python 环境起初缺少 pytest。
+
+**解决：** 安装 pytest，从项目根目录使用：
+
+```powershell
+python -m pytest -q tests/test_llm_errors.py
+```
+
+**结果：** 3 passed。
+
+### Bug 3：Git Diff 出现意外修改
+
+**现象：** 除 `timeout` 外，还出现多行末尾的 `#`。
+
+**原因：** 编辑时意外修改了其他代码行。
+
+**解决：** 清理多余的 `#`，再次检查 Git Diff。
+
+**结果：** Diff 中主要保留预期变化和文件开头空行变化。
+
+### 问题 4：数据库路径潜在缺陷
+
+**现象：** Codex 静态审查发现 `DB_FILE = "chat.db"`。
+
+**原因：** 相对路径依赖当前工作目录。
+
+**处理状态：** 待实际修复和验证。
+
+---
+
+## 七、各项能力等级
+
+说明：🟢 需要同时有独立空白复现、数据流解释、故障定位三类证据，并经过独立 Gate 验证。本日仍不授予 🟢。
+
+| 能力 | 当前等级 | 依据 |
+|---|---|---|
+| Git 基本使用 | 🟡 | 已完成真实操作，但命令仍依赖指导 |
+| Git Diff 理解 | 🟡 | 能观察版本差异，仍需练习独立审查 |
+| Git Commit | 🟡 | 成功创建多个版本 |
+| Git 历史查询 | 🟡 | 已使用 Log 和 Timeline |
+| `.gitignore` | 🟡 | 成功保护 `.env`，数据库规则待最终验证 |
+| pytest 运行 | 🟡 | 独立执行命令仍依赖指导，3 项实际通过 |
+| HTTP Mock 原理 | 🟡 | 理解用途，完整代码非独立编写 |
+| SQLite 查询 | 🟡 | 实际查询成功，命令由 ChatGPT 提供 |
+| pathlib 数据库路径 | 🟡 | 已解释修复方案，尚未验证应用 |
+| Pydantic 严格校验 | ⚪ | 尚未正式测试严格模式 |
+| Codex Code Review | 🟡 | 完成只读审查，问题判断由 ChatGPT 辅助 |
+| 独立 Debug | 🟡 | 能根据反馈改动，缺少完整闭卷定位证据 |
+| Mini Project 独立交付 | 🔴 | 项目能运行，但独立编写与维护能力尚未验证 |
+
+---
+
+## 八、今日学习路线调整
+
+今天还讨论了一个长期问题：
+
+**是否继续每天大量学习 Python 基础，还是改成 Vibe Coding / 项目驱动学习？**
+
+结论：从 W42 开始，建议转向 **项目驱动 + AI Coding + 按需补基础**。
+
+原因：
+
+- 纯基础学习容易脱离实际项目。
+- 知识点持续增加，缺乏整体框架感。
+- 之前学过的代码容易遗忘。
+- 现阶段已经接触 Python、HTTP、SQLite、JSON、Pydantic、pytest、Git，具备开始项目驱动学习的知识基础。
+- 单纯让 AI 生成完整项目又无法证明独立工程能力。
+
+### 建议的新学习比例
+
+| 模块 | 时间比例 | 每天约 5 小时 |
+|---|---|---|
+| Python / 工程基础 | 20% | 1 小时 |
+| 真实项目实践 | 50% | 2.5 小时 |
+| AI Coding / Codex | 30% | 1.5 小时 |
+
+这些时间可以交叉使用，不要求机械切割。
+
+**新的主线项目：AI Job Market Scanner。**
+
+后续不再靠不断增加 Todo 或练习文件推进课程，而是从真实需求出发，让 Codex 辅助实现小功能，再学习相关架构、代码、数据流、测试与 Debug。
+
+保留关键能力 Gate 标准，不因 AI 生成的程序能够运行就认定自己掌握。
+
+---
+
+## 九、待验证清单
+
+### Mini Project 收尾
+
+- 验证 `chat.db` 已被 Git 忽略。
+- 确认此前暴露的 API Key 已撤销、轮换。
+- 修复 `storage.py` 的数据库路径。
+- 验证从不同工作目录运行时仍使用同一数据库。
+- 再次运行完整 pytest。
+- 用实际测试确认 Pydantic 是否接受可转换的字符串数值。
+- 检查数据库保存失败时的处理方式。
+
+### 工程能力复现
+
+- 不看教程，独立执行一次 Git：Status → Diff → Add → Commit → Log。
+- 解释 Git 工作区、暂存区、历史仓库之间的关系。
+- 独立判断一段 HTTP 异常处理代码的执行路径。
+- 解释 Mock 如何替换真实网络请求。
+- 找出一个故意注入的小型代码错误，并解释原因。
+
+### 项目驱动准备
+
+- 读取 AI Job Market Scanner 的现有架构。
+- 选择一个小模块进行输入、处理、输出分析。
+- 确定下一项可以实际交付、可测试的小改动。
+- 建立 AI Coding 任务与 Git Review 的固定流程。
+
+---
+
+## 十、今日结束状态
+
+**2026-10-09｜周五｜W41 Day 5**
+
+今日已确认的结果：
+
+- HTTP Mock：3 passed。
+- SQLite：实际查询到一条分析记录。
+- `.env`：Git 忽略已验证。
+- Git：创建多个真实 Commit，学会用 VS Code 比较历史版本。
+- Codex：完成一次有证据的只读 Code Review。
+- 学习方向：决定从 W42 开始改为项目驱动。
+
+今日尚未确认的结果：
+
+- 完整 pytest 测试套件。
+- `storage.py` 路径修复。
+- Pydantic 严格类型实测。
+- 数据库忽略最终验证。
+- 泄露 API Key 轮换。
+
+**阶段结论：W41 已经形成“真实 AI API → 测试 → 数据存储 → Git 管理 → Codex 审查”的基本工作流程，但多项能力仍依赖参考代码和教学指导。下一阶段需要在真实项目中重复实践，并通过独立复现、讲解和故障定位补齐证据。**

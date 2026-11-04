@@ -1,0 +1,2332 @@
+## W39 周一学习总结（2026-09-21）
+
+### 1. SQLite Todo 项目完成闭环
+
+把之前 JSON 版 Todo 保留下来，另外建立 SQLite 版本：
+
+```text
+todo_app_sqlite/
+├── main.py
+├── todo.py
+├── storage.py
+└── todos.db
+```
+
+理解了三个文件的职责：
+
+* `main.py`：程序入口、菜单、接收用户输入
+* `todo.py`：Todo 的业务逻辑和展示
+* `storage.py`：数据库读写
+* `todos.db`：真正保存数据的 SQLite 数据库
+
+整体数据流：
+
+```text
+main.py
+↓
+todo.py
+↓
+storage.py
+↓
+SQL
+↓
+todos.db
+```
+
+### 2. SQLite 基础概念
+
+认识了：
+
+* Database：数据库
+* Table：表
+* Row：一行数据
+* Column：字段 / 列
+* Connection：Python 和数据库之间的连接
+* Cursor：负责执行 SQL 的对象
+
+基本操作流程：
+
+```python
+conn = sqlite3.connect(DB_FILE)
+cursor = conn.cursor()
+
+cursor.execute(...)
+
+conn.commit()
+conn.close()
+```
+
+理解：
+
+* `execute()`：执行 SQL
+* `commit()`：把修改真正保存到数据库
+* `close()`：关闭连接
+
+### 3. SQL CRUD
+
+完成了 Todo 的四种核心操作。
+
+创建表：
+
+```sql
+CREATE TABLE IF NOT EXISTS todos (
+    id INTEGER PRIMARY KEY,
+    title TEXT,
+    completed INTEGER
+)
+```
+
+新增：
+
+```sql
+INSERT INTO todos(title, completed)
+VALUES (?, ?)
+```
+
+查询：
+
+```sql
+SELECT * FROM todos
+```
+
+修改：
+
+```sql
+UPDATE todos
+SET completed = ?
+WHERE id = ?
+```
+
+删除：
+
+```sql
+DELETE FROM todos
+WHERE id = ?
+```
+
+理解了：
+
+```text
+CRUD
+C = Create
+R = Read
+U = Update
+D = Delete
+```
+
+以及 `WHERE id = ?` 的作用：
+
+> 只修改 / 删除指定 ID 的那条数据。
+
+### 4. 参数化 SQL
+
+使用：
+
+```python
+cursor.execute(
+    "DELETE FROM todos WHERE id = ?",
+    (todo_id,)
+)
+```
+
+而不是自己把用户输入拼进 SQL。
+
+开始理解：
+
+```text
+SQL 语句
++
+参数
+```
+
+应该分开传入。
+
+### 5. SQLite 的 id 和 Python 列表下标不同
+
+进一步明确：
+
+```text
+数据库 id ≠ Python list index
+```
+
+例如：
+
+```text
+数据库：
+id = 2
+
+Python 列表：
+index = 0 / 1 / 2...
+```
+
+数据库应该根据真正的 `id` 做：
+
+```sql
+WHERE id = ?
+```
+
+而不是根据列表位置操作。
+
+### 6. 数据库结果转换成 Python 数据
+
+SQLite 查询出来的一行类似：
+
+```python
+(2, "学习SQLite", 0)
+```
+
+手动转成：
+
+```python
+{
+    "id": 2,
+    "title": "学习SQLite",
+    "completed": False
+}
+```
+
+这里是：
+
+> SQLite tuple → Python dict
+
+不是 JSON 转换。
+
+也复习了：
+
+```python
+bool(0)   # False
+bool(1)   # True
+```
+
+### 7. SQLite 和 JSON 持久化方式的区别
+
+JSON 版本：
+
+```text
+读取 JSON
+↓
+变成 Python list/dict
+↓
+修改内存中的数据
+↓
+save_todos()
+↓
+重新写回 JSON 文件
+```
+
+SQLite 版本：
+
+```text
+执行 INSERT / UPDATE / DELETE
+↓
+commit()
+↓
+直接写入数据库
+```
+
+所以 SQLite 不需要额外再调用一个：
+
+```python
+save_todos()
+```
+
+这一点已经理解。
+
+### 8. 数据库文件路径问题
+
+继续使用之前学过的稳定路径方式：
+
+```python
+from pathlib import Path
+
+BASE_DIR = Path(__file__).parent
+DB_FILE = BASE_DIR / "todos.db"
+```
+
+避免程序因为当前终端目录不同而找错数据库文件。
+
+### 9. SQLite Todo 最终验收
+
+完整跑通：
+
+```text
+查看任务 ✅
+添加任务 ✅
+完成任务 ✅
+删除任务 ✅
+退出程序 ✅
+```
+
+SQLite Todo 基础 Gate 已通过。
+
+---
+
+## 10. HTTP POST 入门
+
+开始从本地数据库进入网络 API。
+
+理解 GET 和 POST 的基础区别：
+
+```text
+GET
+主要：向服务器拿数据
+
+POST
+主要：向服务器发送数据，让服务器处理
+```
+
+使用：
+
+```python
+response = requests.post(
+    url,
+    json=data
+)
+```
+
+其中：
+
+```python
+url
+```
+
+表示请求发到哪里。
+
+```python
+json=data
+```
+
+表示真正发送给服务器的 JSON 请求体。
+
+### 11. 第一次真实 POST 请求成功
+
+使用 JSONPlaceholder：
+
+```python
+url = "https://jsonplaceholder.typicode.com/posts"
+
+data = {
+    "title": "学习 POST",
+    "body": "这是我第一次发送 POST 请求",
+    "userId": 1
+}
+```
+
+成功返回：
+
+```text
+201
+```
+
+以及类似：
+
+```python
+{
+    "title": "学习 POST",
+    "body": "这是我第一次发送 POST 请求",
+    "userId": 1,
+    "id": 101
+}
+```
+
+理解：
+
+```python
+response.status_code
+```
+
+用于查看 HTTP 状态。
+
+```python
+response.json()
+```
+
+把服务器返回的 JSON 解析成 Python 数据。
+
+### 12. HTTP 请求当前的整体理解
+
+目前可以理解为：
+
+```text
+Python
+↓
+requests.post()
+↓
+发送 URL + JSON body
+↓
+服务器处理
+↓
+返回 response
+↓
+status_code
+↓
+response.json()
+```
+
+### 13. 嵌套 JSON / Python 数据读取
+
+练习了：
+
+字典：
+
+```python
+result["data"]["answer"]
+```
+
+列表：
+
+```python
+result["data"]["choices"][0]["message"]["content"]
+```
+
+当前规则：
+
+```text
+dict → ["key"]
+list → [index]
+```
+
+这一块目前还需要继续练习，容易漏掉最外层 key 或列表下标。
+
+---
+
+## 14. Python 环境问题的经验
+
+当天遇到了：
+
+```text
+ModuleNotFoundError: No module named 'requests'
+```
+
+原因不是代码本身，而是 VS Code 实际运行的 Python 和安装 `requests` 的 Python 不是同一个环境。
+
+最后决定简化学习环境规则：
+
+```text
+小练习
+→ 共用学习 Python 环境
+
+正式独立项目
+→ 再单独建立 .venv
+```
+
+不再为了每个几十行的小练习重复创建虚拟环境。
+
+同时明确：
+
+```text
+VS Code 黄色波浪线
+≠
+代码一定不能运行
+```
+
+编辑器环境和真正运行代码的 Python 环境需要区分。
+
+---
+
+## 今日已掌握较稳
+
+```text
+SQLite 基本结构
+CRUD
+WHERE id
+commit
+Todo 三层结构
+数据库 id ≠ list index
+JSON 与 SQLite 持久化区别
+POST 基本概念
+json=data
+status_code
+response.json()
+```
+
+## 仍需继续巩固
+
+```text
+Connection / Cursor 名称和职责
+从空白写 SQL
+嵌套 dict/list 取值
+.env → load_dotenv() → os.getenv()
+raise
+__name__ == "__main__"
+```
+
+## 下一次从这里继续
+
+```text
+POST ✅
+↓
+Headers
+↓
+Authorization / Bearer Token
+↓
+真实 LLM API
+↓
+解析模型返回结果
+```
+
+W39 周一最核心的进展可以概括成一句：
+
+> **第一次从“本地 Python 程序 + 数据库”正式走到了“Python 向互联网 API 发送数据并读取返回结果”。**
+## W39 周二学习总结（2026-09-22）
+
+### 今日目标
+
+继续 W39 的 HTTP / API 主线，把昨天的 POST 基础进一步接到真正的 LLM API，并最终完成：
+
+```text
+Python
+→ HTTP POST
+→ LLM
+→ 解析返回结果
+→ SQLite 保存
+```
+
+---
+
+## 1. Headers
+
+在 POST 请求中加入：
+
+```python
+headers = {
+    "X-Test-Client": "arlo-learning"
+}
+```
+
+理解：
+
+```text
+JSON body
+→ 真正发送的数据
+
+Headers
+→ 请求附带的信息，例如身份认证
+```
+
+通过：
+
+```python
+response.request.headers
+```
+
+验证 Header 确实跟着请求发送。
+
+同时理解：
+
+```python
+requests.post(..., json=data)
+```
+
+会自动设置：
+
+```text
+Content-Type: application/json
+```
+
+一般不需要手动填写。
+
+---
+
+## 2. Authorization / Bearer Token
+
+学习真实 API 常见的认证形式：
+
+```python
+headers = {
+    "Authorization": "Bearer demo-token"
+}
+```
+
+理解：
+
+```text
+Authorization
+→ 身份认证信息
+
+Bearer
+→ 一种 Token 认证方式
+
+demo-token
+→ 实际 Token
+```
+
+请求中最终类似：
+
+```text
+Authorization: Bearer demo-token
+```
+
+---
+
+## 3. `.env` 保存 API Key
+
+重新把 W38 学过的环境变量真正用起来。
+
+`.env`：
+
+```text
+API_KEY=demo-token
+```
+
+Python：
+
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+api_key = os.getenv("API_KEY")
+```
+
+再放进 Header：
+
+```python
+headers = {
+    "Authorization": f"Bearer {api_key}"
+}
+```
+
+完整流程：
+
+```text
+.env
+↓
+load_dotenv()
+↓
+os.getenv("API_KEY")
+↓
+api_key
+↓
+Authorization Header
+```
+
+实际遇到：
+
+```text
+ModuleNotFoundError: No module named 'dotenv'
+```
+
+安装：
+
+```powershell
+python -m pip install python-dotenv
+```
+
+后成功运行。
+
+理解了真实 API Key 不应该直接硬编码在 `.py` 文件里。
+
+---
+
+## 4. 第一次真正调用本地 LLM API
+
+使用：
+
+```text
+LM Studio
+Qwen3.5 9B
+http://127.0.0.1:1234
+```
+
+调用 OpenAI-compatible endpoint：
+
+```text
+POST /v1/chat/completions
+```
+
+请求：
+
+```python
+data = {
+    "model": "qwen/qwen3.5-9b",
+    "messages": [
+        {
+            "role": "user",
+            "content": "用一句话介绍一下你自己"
+        }
+    ]
+}
+```
+
+理解：
+
+```text
+model
+→ 使用哪个模型
+
+messages
+→ 对话消息
+
+role
+→ 谁说的话
+
+content
+→ 具体内容
+```
+
+---
+
+## 5. 真实 Debug：502
+
+第一次请求得到：
+
+```text
+502
+```
+
+随后：
+
+```python
+response.json()
+```
+
+又触发：
+
+```text
+JSONDecodeError
+```
+
+理解了原因：
+
+```text
+真正的问题
+→ API 返回 502
+
+第二个问题
+→ 502 返回内容不是正常 JSON
+→ 仍然执行 response.json()
+→ JSONDecodeError
+```
+
+因此 Debug 时改成：
+
+```python
+print(response.status_code)
+print(response.text)
+```
+
+得到重要规则：
+
+```text
+API 失败
+↓
+先看 status_code
+↓
+再看 response.text
+↓
+确认返回格式
+↓
+成功后再解析 JSON
+```
+
+---
+
+## 6. 定位 Windows 本地代理问题
+
+进一步测试：
+
+```text
+GET /v1/models
+```
+
+仍然得到：
+
+```text
+502
+```
+
+说明问题不是：
+
+```text
+messages
+模型名称
+chat/completions
+JSON body
+```
+
+而是在：
+
+```text
+Python
+→ localhost
+→ LM Studio
+```
+
+这一层。
+
+绕开环境代理后：
+
+```python
+session = requests.Session()
+session.trust_env = False
+```
+
+再次请求得到：
+
+```text
+200
+```
+
+并成功返回模型列表。
+
+理解：
+
+> 本地 `localhost / 127.0.0.1` 请求莫名出现 502 时，需要考虑系统代理是否把本地请求也代理走了。
+
+---
+
+## 7. LLM API 成功返回
+
+最终成功获得真实响应：
+
+```json
+{
+    "choices": [
+        {
+            "message": {
+                "role": "assistant",
+                "content": "我是通义千问..."
+            }
+        }
+    ]
+}
+```
+
+把 JSON 转成 Python 数据：
+
+```python
+result = response.json()
+```
+
+然后提取模型最终回答：
+
+```python
+answer = result["choices"][0]["message"]["content"]
+```
+
+再次巩固：
+
+```text
+dict → ["key"]
+list → [index]
+```
+
+完整路径：
+
+```text
+result
+↓
+["choices"]
+↓
+[0]
+↓
+["message"]
+↓
+["content"]
+```
+
+---
+
+## 8. 用户输入 → LLM
+
+把写死的问题：
+
+```python
+"content": "用一句话介绍一下你自己"
+```
+
+改成：
+
+```python
+question = input("请输入问题：")
+```
+
+然后：
+
+```python
+"content": question
+```
+
+形成：
+
+```text
+用户输入
+↓
+question
+↓
+messages
+↓
+POST
+↓
+Qwen
+↓
+response
+↓
+answer
+```
+
+第一次形成真正可以动态提问的最简 AI 程序。
+
+---
+
+## 9. API 请求失败处理
+
+增加：
+
+```python
+if response.status_code == 200:
+    result = response.json()
+    answer = result["choices"][0]["message"]["content"]
+    print(answer)
+else:
+    print("请求失败：", response.status_code)
+    print(response.text)
+```
+
+解决：
+
+```text
+以前：
+502
+→ 仍然 response.json()
+→ 程序再次报错
+
+现在：
+502
+→ 进入 else
+→ 输出状态码和原始错误
+```
+
+目前只是最基础错误处理，后续再逐渐完善。
+
+---
+
+## 10. LLM + SQLite 整合
+
+建立：
+
+```text
+llm_api_practice/
+├── llm_test.py
+├── storage.py
+└── chat.db
+```
+
+数据库表：
+
+```sql
+CREATE TABLE IF NOT EXISTS chats (
+    id INTEGER PRIMARY KEY,
+    question TEXT,
+    answer TEXT
+)
+```
+
+新增：
+
+```python
+def save_chat(question, answer):
+```
+
+使用：
+
+```sql
+INSERT INTO chats(question, answer)
+VALUES (?, ?)
+```
+
+并在 LLM 成功返回后：
+
+```python
+storage.save_chat(question, answer)
+```
+
+最终数据流：
+
+```text
+input()
+↓
+question
+↓
+POST
+↓
+Qwen
+↓
+response.json()
+↓
+content
+↓
+answer
+↓
+save_chat(question, answer)
+↓
+SQLite
+```
+
+---
+
+## 11. SELECT 验证持久化
+
+新增：
+
+```python
+def get_chats():
+    ...
+    cursor.execute("SELECT * FROM chats")
+    rows = cursor.fetchall()
+    ...
+    return rows
+```
+
+实际验证：
+
+```text
+请输入问题：一加一等于几
+一加一等于二。
+
+[(1, '一加一等于几', '一加一等于二。')]
+```
+
+证明：
+
+```text
+LLM 输入
++
+LLM 输出
+```
+
+已经真正写入 SQLite，并能重新读取。
+
+---
+
+## 今日主要问题与修复
+
+### `python-dotenv` 未安装
+
+```text
+ModuleNotFoundError
+→ 安装 python-dotenv
+→ 解决
+```
+
+### LM Studio 本地 API 502
+
+```text
+GET /v1/models 也 502
+→ 排除请求体问题
+→ 定位系统代理
+→ session.trust_env = False
+→ 200
+```
+
+### JSONDecodeError
+
+```text
+错误响应不是 JSON
+→ 不应该直接 response.json()
+→ 失败时先查看 status_code + response.text
+```
+
+### SQL 表名复制错误
+
+最初：
+
+```sql
+INSERT INTO todos
+```
+
+实际应为：
+
+```sql
+INSERT INTO chats
+```
+
+修正后保存成功。
+
+---
+
+## 当前掌握情况
+
+### 🟢 已较稳定
+
+```text
+POST
+headers
+Authorization / Bearer
+.env 基本流程
+LLM API 请求结构
+model / messages / role / content
+response.status_code
+response.json()
+choices[0]["message"]["content"]
+input() 动态提问
+基础 API 错误分支
+SQLite INSERT / SELECT
+LLM + SQLite 整合
+```
+
+### 🟡 后续继续巩固
+
+```text
+嵌套 dict / list 从空白独立写
+load_dotenv / os.getenv 函数名
+HTTP 状态码体系
+更完整的异常处理
+SQL 从空白独立编写
+```
+
+---
+
+## W39 当前状态
+
+W39 核心链路已经提前跑通：
+
+```text
+Python
+↓
+用户输入
+↓
+HTTP POST
+↓
+真实 LLM API
+↓
+解析 JSON
+↓
+提取模型回答
+↓
+SQLite 持久化
+↓
+SELECT 验证
+```
+
+**W39 核心 Gate 已通过。**
+
+下一阶段进入：
+
+```text
+W40
+→ Structured Output
+→ 让 LLM 返回固定 JSON
+→ 程序稳定读取字段
+→ 数据校验 / 失败处理
+→ 小型整合项目
+```
+
+Streaming、LangChain、Agent、RAG 等暂不展开，继续按主学习路线推进。
+## W40 第一天学习总结（2026-09-23）
+
+### 今日主题：Structured Output（结构化输出）
+
+今天从“LLM 返回一段自然语言”继续往前走，开始让模型返回**程序可以稳定读取的固定结构数据**。
+
+---
+
+## 1. Structured Output 是什么
+
+以前模型返回：
+
+```text
+苹果会掉下来是因为受到地球引力。
+```
+
+这种内容适合人看，但程序不好稳定处理。
+
+现在让模型返回：
+
+```json
+{
+  "answer": "因为受到地球引力",
+  "category": "科学"
+}
+```
+
+理解：
+
+> **Structured Output = 让模型按照规定好的结构返回数据，而不是随便写一段话。**
+
+数据流从：
+
+```text
+用户问题
+→ LLM
+→ 一段自然语言
+→ 人阅读
+```
+
+变成：
+
+```text
+用户问题
+→ LLM
+→ 固定 JSON
+→ Python 读取字段
+→ 数据库 / 自动化 / 后续程序继续处理
+```
+
+---
+
+## 2. Prompt 和 JSON Schema 的区别
+
+今天理解了这两个东西职责不同。
+
+### Prompt
+
+```text
+告诉模型“要干什么、内容应该怎么写”
+```
+
+例如：
+
+```text
+summary：一句话总结用户需求
+category：填写问题类型
+urgent：是否需要尽快处理
+confidence：分类置信度
+```
+
+可以记成：
+
+> **Prompt → 规定“说什么”。**
+
+### JSON Schema
+
+规定返回数据的结构：
+
+```json
+{
+  "summary": "...",
+  "category": "...",
+  "urgent": true,
+  "confidence": 0.95
+}
+```
+
+可以记成：
+
+> **JSON Schema → 规定“长什么样”。**
+
+---
+
+## 3. JSON Schema 基础结构
+
+接触了：
+
+```python
+"response_format": {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "question_analysis",
+        "strict": True,
+        "schema": {
+            ...
+        }
+    }
+}
+```
+
+现阶段不要求默写整段，只需要知道：
+
+```text
+response_format
+→ 我要规定模型输出格式
+
+json_schema
+→ 使用 JSON Schema 作为模板
+
+properties
+→ 规定有哪些字段，以及字段是什么类型
+
+required
+→ 哪些字段必须出现
+```
+
+还理解了：
+
+```python
+"additionalProperties": False
+```
+
+表示：
+
+> 不允许模型自己增加 Schema 之外的字段。
+
+---
+
+## 4. JSON Schema 数据类型
+
+今天实际使用了三种：
+
+```text
+string   → 文字
+number   → 数字，可以有小数
+boolean  → true / false
+```
+
+例如：
+
+```python
+"summary": {
+    "type": "string"
+}
+```
+
+```python
+"confidence": {
+    "type": "number"
+}
+```
+
+```python
+"urgent": {
+    "type": "boolean"
+}
+```
+
+还给 `confidence` 增加了范围：
+
+```python
+"confidence": {
+    "type": "number",
+    "minimum": 0,
+    "maximum": 1
+}
+```
+
+表示：
+
+```text
+confidence 必须是数字
+并且只能在 0～1 之间
+```
+
+---
+
+## 5. `json.loads()`
+
+这是今天还需要继续巩固的重点。
+
+模型返回的：
+
+```json
+{"summary": "账号无法登录", "urgent": true}
+```
+
+虽然看起来像 JSON，但从 API 取出来时：
+
+```python
+content
+```
+
+本质仍然是一段字符串。
+
+通过：
+
+```python
+parsed = json.loads(content)
+```
+
+才能转换成 Python 可以真正操作的数据：
+
+```python
+{
+    "summary": "账号无法登录",
+    "urgent": True
+}
+```
+
+然后才能：
+
+```python
+parsed["summary"]
+parsed["urgent"]
+```
+
+今天的记忆方式：
+
+> **`json.loads()` → 把 JSON 字符串变成 Python 数据。**
+
+---
+
+## 6. 第一次遇到 Structured Output 解析失败
+
+最开始只是通过 Prompt 告诉模型：
+
+```text
+只返回 JSON
+```
+
+但模型实际返回：
+
+````text
+```json
+{
+    ...
+}
+```
+````
+
+也就是自己加了 Markdown 代码块。
+
+于是：
+
+```python
+json.loads(content)
+```
+
+出现：
+
+```text
+JSONDecodeError
+```
+
+这让我们验证了一个重要事实：
+
+```text
+Prompt 里要求“只返回 JSON”
+≠
+模型一定返回合法 JSON
+```
+
+一开始临时通过：
+
+````python
+content = content.replace("```json", "").replace("```", "").strip()
+````
+
+清理模型输出。
+
+后来升级到真正的：
+
+```text
+JSON Schema Structured Output
+```
+
+以后不需要依赖这种 `replace()` 补救方式。
+
+---
+
+## 7. JSON Schema 真正约束模型输出
+
+加入 `response_format + json_schema` 后，模型可以稳定返回：
+
+```json
+{
+    "answer": "...",
+    "category": "...",
+    "confidence": 1.0
+}
+```
+
+Python 再：
+
+```python
+parsed = json.loads(content)
+```
+
+成功解析。
+
+最终能分别读取：
+
+```python
+parsed["answer"]
+parsed["category"]
+parsed["confidence"]
+```
+
+---
+
+## 8. `try / except JSONDecodeError`
+
+为了防止 JSON 解析失败时整个程序崩掉，加入：
+
+```python
+try:
+    parsed = json.loads(content)
+
+except json.JSONDecodeError:
+    print("JSON 解析失败")
+    print("模型原始返回：", content)
+```
+
+还故意测试：
+
+```python
+content = "这不是 JSON"
+```
+
+结果程序没有出现完整 Traceback，而是正常输出：
+
+```text
+JSON 解析失败
+模型原始返回：这不是 JSON
+```
+
+理解：
+
+```text
+try
+→ 尝试解析 JSON
+
+except json.JSONDecodeError
+→ 如果 JSON 解析失败，就走备用处理
+```
+
+---
+
+## 9. `JSONDecodeError` 和 `KeyError` 的区别
+
+今天遇到了两种不同错误。
+
+### JSONDecodeError
+
+```text
+整段内容根本不是合法 JSON
+```
+
+例如：
+
+```text
+这不是 JSON
+```
+
+问题发生在：
+
+```python
+json.loads(content)
+```
+
+### KeyError
+
+JSON 已经成功变成 Python dict，但程序读取了一个不存在的字段。
+
+例如 Schema 已经从：
+
+```text
+answer
+```
+
+改成：
+
+```text
+summary
+```
+
+Python 还在：
+
+```python
+parsed["answer"]
+```
+
+于是：
+
+```text
+KeyError: 'answer'
+```
+
+今天总结：
+
+```text
+JSONDecodeError
+→ 数据整体解析不了
+
+KeyError
+→ 数据已经解析成功，但找不到指定字段
+```
+
+---
+
+## 10. Prompt、Schema、Python 字段必须同步
+
+今天把结构从：
+
+```text
+answer
+category
+confidence
+```
+
+升级到：
+
+```text
+summary
+category
+urgent
+confidence
+```
+
+实际遇到了：
+
+```text
+Schema 改了
+→ Python 读取字段没改
+→ KeyError
+```
+
+因此形成一个重要规则：
+
+```text
+Prompt 字段
+=
+JSON Schema 字段
+=
+Python 读取字段
+```
+
+三边必须保持一致。
+
+---
+
+## 11. 最终小整合练习
+
+输入：
+
+```text
+我的账号突然登不上去了，里面还有很重要的工作文件，麻烦尽快帮我处理。
+```
+
+模型成功输出并被 Python 解析成：
+
+```text
+总结：用户因无法登录账号且涉及重要工作文件，急需恢复访问权限。
+类型：账号登录异常
+紧急：True
+置信度：1.0
+```
+
+最终数据结构：
+
+```json
+{
+  "summary": "...",
+  "category": "...",
+  "urgent": true,
+  "confidence": 1.0
+}
+```
+
+完整链路：
+
+```text
+用户输入
+↓
+Prompt
+↓
+JSON Schema
+↓
+LLM
+↓
+合法 JSON 字符串
+↓
+json.loads()
+↓
+Python dict
+↓
+summary / category / urgent / confidence
+```
+
+---
+
+## 今日 Gate
+
+### 🟢 已理解
+
+```text
+Structured Output 是解决什么问题
+Prompt 和 JSON Schema 的职责区别
+properties
+required
+string / number / boolean
+minimum / maximum
+Prompt / Schema / Python 字段需要一致
+JSONDecodeError 和 KeyError 的基本区别
+try / except JSONDecodeError
+```
+
+### 🟡 继续巩固
+
+```text
+json.loads()
+复杂 JSON Schema 的括号层级
+从空白独立修改 Schema
+JSON Schema 各字段名称
+```
+
+现阶段不要求自己闭卷写出几十行 JSON Schema。
+
+目标是：
+
+> **AI 可以帮忙生成 Schema，但自己能够读懂、修改字段、识别类型、发现哪里不一致。**
+
+---
+
+## 今天最核心的四句话
+
+```text
+Prompt
+→ 规定“说什么”
+
+JSON Schema
+→ 规定“长什么样”
+
+json.loads()
+→ 把 JSON 字符串变成 Python 数据
+
+try / except
+→ JSON 解析失败时不要让程序直接崩
+```
+
+今天已经完成 W40 的第一块核心能力：**Structured Output + Schema 约束 + JSON 解析 + 解析失败处理。**
+
+下一步按 W40 主线继续进入 **logging + 第一个真正整合的 Mini Project**。
+## W40 Day 4 学习总结（2026-09-24）
+
+今天的核心主题：
+
+# 从「能运行的 AI 脚本」升级到「有工程结构的 AI 应用」
+
+今天不是学习新的 API，而是在把之前写的 LLM 调用程序开始工程化。
+
+---
+
+# 一、项目模块化（Module）
+
+## 昨天的问题
+
+之前：
+
+```text
+structured_output_test.py
+```
+
+一个文件里面包含：
+
+```text
+用户输入
+ ↓
+Prompt
+ ↓
+调用 LLM
+ ↓
+解析 JSON
+ ↓
+打印结果
+ ↓
+日志
+```
+
+所有东西混在一起。
+
+小测试没问题，但是项目变大后会很难维护。
+
+---
+
+## 今天拆成：
+
+```text
+llm_api_practice
+
+├── main.py
+├── llm.py
+├── parser.py
+├── logger_config.py
+├── storage.py
+```
+
+每个文件负责一个事情。
+
+---
+
+## 各模块职责
+
+### main.py
+
+总控制。
+
+负责：
+
+```text
+用户输入
+调用各模块
+控制流程
+```
+
+它像项目的大脑。
+
+---
+
+### llm.py
+
+负责：
+
+```text
+问题
+ ↓
+调用大模型
+ ↓
+返回模型结果
+```
+
+里面放：
+
+```python
+requests.post()
+```
+
+不负责：
+
+* 数据库
+* JSON解析
+* 用户交互
+
+---
+
+### parser.py
+
+负责：
+
+```text
+模型返回字符串
+ ↓
+Python对象
+```
+
+核心：
+
+```python
+json.loads()
+```
+
+例如：
+
+字符串：
+
+```json
+{
+ "summary":"账号问题"
+}
+```
+
+变成：
+
+```python
+{
+ "summary":"账号问题"
+}
+```
+
+让 Python 可以读取。
+
+---
+
+### logger_config.py
+
+负责：
+
+日志配置。
+
+之前：
+
+```python
+print()
+```
+
+升级：
+
+```python
+logging.info()
+```
+
+让程序以后可以：
+
+* 保存日志
+* 分等级
+* 排查问题
+
+---
+
+# 二、模块之间的数据传递
+
+今天遇到一个非常真实的问题：
+
+拆文件后：
+
+```text
+main.py
+ ↓
+llm.py
+ ↓
+parser.py
+```
+
+三个文件之间产生了“接口”。
+
+---
+
+## 出现的问题
+
+第一次运行：
+
+```
+JSONDecodeError
+```
+
+原因：
+
+模型返回：
+
+```text
+answer:
+xxx
+
+category:
+xxx
+```
+
+不是 JSON。
+
+---
+
+原因：
+
+拆分时把：
+
+```python
+response_format
+```
+
+丢了。
+
+---
+
+之前：
+
+```python
+response_format
++
+json_schema
+```
+
+告诉模型：
+
+必须输出：
+
+```json
+{
+"summary":"",
+"category":"",
+"urgent":false,
+"confidence":0
+}
+```
+
+---
+
+没有它：
+
+模型只是按照 Prompt 回复：
+
+```
+answer:
+xxx
+```
+
+所以：
+
+今天学到一个非常重要的点：
+
+> Prompt 要求 ≠ 程序约束
+
+真正稳定需要：
+
+```text
+Prompt
++
+JSON Schema
++
+Parser
+```
+
+---
+
+# 三、异常处理（Exception Handling）
+
+今天加入：
+
+## parser.py
+
+从：
+
+```python
+return json.loads(content)
+```
+
+升级：
+
+```python
+try:
+    return json.loads(content)
+
+except json.JSONDecodeError:
+    return None
+```
+
+---
+
+理解：
+
+## try
+
+尝试执行：
+
+```python
+json.loads()
+```
+
+---
+
+## except
+
+如果发生指定错误：
+
+例如：
+
+```text
+JSONDecodeError
+```
+
+不要让程序崩溃。
+
+---
+
+流程：
+
+正常：
+
+```text
+JSON字符串
+ ↓
+dict
+```
+
+错误：
+
+```text
+垃圾文本
+ ↓
+解析失败
+ ↓
+None
+ ↓
+main处理
+```
+
+---
+
+# 四、Validator（数据校验）
+
+今天开始增加：
+
+```text
+parser
+ ↓
+validator
+```
+
+原因：
+
+### JSON合法 ≠ 数据正确
+
+例如：
+
+合法：
+
+```json
+{
+"summary":"你好"
+}
+```
+
+但是程序需要：
+
+```json
+{
+"summary":"",
+"category":"",
+"urgent":false,
+"confidence":0.9
+}
+```
+
+少字段也会导致后面错误。
+
+---
+
+所以增加：
+
+```text
+validator.py
+```
+
+负责：
+
+检查：
+
+* 字段是否存在
+* 数据是否符合要求
+
+---
+
+# 五、Pydantic（开始接触）
+
+今天最后学习了 Pydantic 思想。
+
+之前：
+
+手写：
+
+```python
+required_fields=[
+"summary",
+"category",
+"urgent",
+"confidence"
+]
+```
+
+只能检查字段。
+
+---
+
+Pydantic：
+
+定义模型：
+
+```python
+class AIResponse(BaseModel):
+
+    summary:str
+
+    category:str
+
+    urgent:bool
+
+    confidence:float
+```
+
+它同时检查：
+
+字段：
+
+```text
+summary
+category
+urgent
+confidence
+```
+
+类型：
+
+```text
+str
+bool
+float
+```
+
+---
+
+# 六、理解 `**data`
+
+今天重点理解：
+
+```python
+AIResponse(**data)
+```
+
+假设：
+
+```python
+data={
+"summary":"你好",
+"confidence":0.9
+}
+```
+
+等价于：
+
+```python
+AIResponse(
+summary="你好",
+confidence=0.9
+)
+```
+
+`**`
+
+作用：
+
+> 把字典拆开，把 key 变成参数。
+
+---
+
+# 七、今天完整 AI 应用链路
+
+今天你的项目已经变成：
+
+```text
+用户输入
+
+↓
+
+main.py
+
+↓
+
+llm.py
+
+调用 LLM
+
+↓
+
+模型返回 JSON
+
+↓
+
+parser.py
+
+JSON解析
+
+↓
+
+validator.py
+
+数据验证
+
+↓
+
+main.py
+
+业务处理
+
+↓
+
+logging
+
+记录
+```
+
+这已经不是简单调用 API。
+
+而是一个小型 AI 应用架构。
+
+---
+
+# 今天掌握的核心概念
+
+## 1. 模块化
+
+> 一个文件负责一个职责。
+
+---
+
+## 2. Prompt 和 Schema 的区别
+
+Prompt：
+
+> 告诉模型做什么。
+
+Schema：
+
+> 限制模型输出格式。
+
+---
+
+## 3. Parser
+
+> 把模型输出转换成程序能用的数据。
+
+---
+
+## 4. Validator
+
+> 防止错误数据进入系统。
+
+---
+
+## 5. Pydantic
+
+> 用 Python 定义可靠的数据结构。
+
+---
+
+# 今天完成情况
+
+✅ 项目拆分完成
+✅ llm.py 独立
+✅ parser.py 独立
+✅ logging 接入
+✅ JSON Schema 保留
+✅ 异常处理加入
+✅ Validator 思想建立
+✅ Pydantic 入门
+
+---
+
+# 今天的实际能力提升
+
+昨天：
+
+> 我可以调用大模型。
+
+今天：
+
+> 我开始知道怎么把大模型接入一个可靠的软件系统。
+
+这一步非常关键，因为你以后做：
+
+* Personal AI OS
+* Creator OS
+* AI Job Scanner
+
+本质都是：
+
+```text
+AI输出
+ ↓
+解析
+ ↓
+验证
+ ↓
+存储
+ ↓
+业务逻辑
+```
+
+今天这个结构就是以后所有 AI 自动化项目的底层模板。
+
+---
+
+下一次继续：
+
+## Storage Layer（数据库层）
+
+把现在：
+
+```text
+AI回答
+ ↓
+logging显示
+```
+
+升级：
+
+```text
+AI回答
+ ↓
+SQLite保存
+ ↓
+以后可以查询历史
+```
+
+这样你的第一个完整 AI 小应用闭环就形成了。

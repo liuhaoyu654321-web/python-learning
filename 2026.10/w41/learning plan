@@ -1,0 +1,73 @@
+这周我建议不要机械照原路线直接进 FastAPI。
+
+**原路线确实把 FastAPI 放在 W41～W42**，但前提是 W40 已经完成“结构化输出 + Mini Project + logging + 错误处理”的收尾。粘贴的 markdown (1)。md 你这两天的闭卷测试已经说明，W39/W40 有几块还不稳定，所以这周应该变成 **“W40 收尾 + W41 起步周”**，而不是纯 FastAPI 周。
+
+## W41 Learning Plan｜2026-10-05 ～ 10-11
+
+**本周唯一核心目标：**
+
+> 把 `Python → LLM API → JSON → Pydantic → SQLite → logging` 这一条链真正串起来，并开始建立测试习惯。
+
+这也符合你 10 月的大目标：从“看得懂”开始转成“自己能写一个小而完整的 Python 程序”。AI_Learning_Roadmap_2026-09_to\_…
+
+1. **周一～周二：恢复 + 查漏补缺**  
+   这部分现在基本已经做了。复习 W38–W40，完成一次 23 分钟闭卷测试；暴露出 `dict/list`、LLM response 层级、SQLite SQL、函数调用/Pydantic 等薄弱点。今天继续把 `parser / models / validator / logging` 理清。
+
+2. **周三：Pydantic 真正落地**  
+   不再只“看懂”。你自己写一个最小 `BaseModel`，让正确数据通过、缺字段失败、错误类型失败；然后把当前手写 validator 简化掉，明确 `parser` 和 Pydantic 各负责什么。目标不是背 Pydantic，而是能讲清：
+   ```text
+   JSON字符串 → dict → Pydantic对象
+   ```
+
+3. **周四：第一次 pytest**  
+   只学最小测试，不扩展框架。给 parser / Pydantic 写 4 个测试：
+   ```text
+   合法 JSON
+   非法 JSON
+   缺字段
+   类型错误
+   ```
+   这周要解决“三周没有测试”的缺口。
+
+4. **周五：W40 Mini Project 收尾**  
+   把已有零件真正整合：
+   ```text
+   CLI input
+   → LLM
+   → Structured Output
+   → Parser
+   → Pydantic
+   → SQLite
+   → Logging
+   ```
+   同时明确 `None / ValidationError / API失败` 怎么走。目标是一个能运行、结构清楚的小项目，不加新功能。原路线对 W40 的要求本来就是 CLI + SQLite + LLM API + 错误处理 + logging + README。粘贴的 markdown (1)。md
+
+5. **周六轻量验收 + Portfolio 推进**  
+   做一次缩小版闭卷复现和 Debug；然后只给 **AI Job Market Scanner** 补 README 草案和现有数据流图，不开发新功能。整理一份待 Claude 审查的证据包。周日休息。
+
+### 本周明确不学
+
+**FastAPI 最多只允许周五/周六在前面全部完成后“看一眼它解决什么问题”，不正式展开。**
+
+继续推迟：
+
+`Agent / LangChain / RAG / Streaming / MCP 深挖 / n8n / ComfyUI / Docker`
+
+因为你的学习系统本来就要求每周以“能不能解释、能不能自己改、能不能跑、报错知不知道去哪看”为验收，而不是赶知识点数量。
+
+### 周末我们要收集的待验证证据
+
+本周结束时，希望至少拿到：
+
+```text
+① 一次小型空白复现
+② 一次 Debug 注入
+③ 一次 3 分钟数据流讲解
+④ 4 个 pytest
+⑤ 一个收尾后的 Mini Project
+⑥ Scanner README + 数据流草案
+```
+
+**不由我宣布 Gate 通过。** 我只记录哪些证据已经有、哪些还缺；Claude 恢复后再做最终独立验收。
+
+所以你今天的 Learning Log 写完之后，**明天就从“Pydantic 真正落地”开始**，而不是再重新复习一整天。

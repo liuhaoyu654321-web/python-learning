@@ -1,0 +1,212 @@
+# Learning Log｜2026-10-12｜星期一｜W42
+
+## 1. 今日主题
+
+**正式进入 W42 项目驱动学习：以 AI Job Market Scanner 的 `all_jobs.py` 为目标，学习从 Python 岗位数据到 SQLite 数据库，再到 JSON 文件的完整导出流程。**
+
+今天不直接修改真实 Scanner，而是通过简化 Demo 理解其核心功能。
+
+## 2. 今日学习内容
+
+### ① Python 数据导出 JSON
+
+创建 `jobs_export_demo.py`，学习：
+
+- 使用列表 `[]` 存储多条岗位数据。
+- 使用字典 `{}` 表示单条岗位。
+- 使用 `len(jobs)` 统计岗位数量。
+- 使用 `payload` 组织导出数据。
+- 使用 `json.dumps()` 把 Python 数据转换成 JSON 字符串。
+- 使用 `Path.write_text()` 写入 `jobs_demo.json`。
+- 使用 `ensure_ascii=False` 保留中文，`indent=2` 格式化输出。
+
+**结果：** 已明确确认完成初次 JSON 导出练习，并按要求增加第三条岗位。
+
+### ② for 循环与城市统计
+
+学习以下代码：
+
+```python
+city_counts = {}
+
+for job in jobs:
+    city = job["city"]
+    city_counts[city] = city_counts.get(city, 0) + 1
+```
+
+理解：
+
+- `for` 用于逐条遍历岗位。
+- `.get(city, 0)` 用于读取已有数量，缺失时使用默认值 0。
+- 每处理一条岗位，对应城市计数加 1。
+- `city_counts` 可以直接加入 JSON 导出的 `payload`。
+
+**结果：** 已完成讲解，尚无明确的独立运行确认。
+
+### ③ 字典推导式
+
+接触真实 Scanner 中的代码：
+
+```python
+job = {field: row.get(field) for field in fields}
+```
+
+将其拆解成普通 for 循环：
+
+```python
+job = {}
+
+for field in fields:
+    job[field] = row.get(field)
+```
+
+理解它的主要用途：**从原始岗位字典中选取指定字段，组成新的字典。**
+
+安排了 `dict_comprehension_demo.py` 对照实验，但尚无明确的运行结果反馈。
+
+### ④ 理解 all_jobs.py 的职责
+
+今天主动提出一个重要问题：
+
+**“all_jobs 到底是干什么的？最后把什么转换成什么？”**
+
+经过讨论，明确了：
+
+- `all_jobs.py` 不是负责爬取招聘网站的模块。
+- 它从已经保存的 SQLite 岗位数据中读取记录。
+- 对岗位进行字段筛选和必要的数据整理。
+- 将结果组织为 Python 列表与字典。
+- 最终导出 `market_all_jobs.json`，供其他程序和分析流程使用。
+
+核心流程：
+
+**SQLite → Python 数据 → JSON 文件**
+
+### ⑤ SQLite 数据库导出 Demo
+
+开始学习更接近真实 Scanner 的流程。
+
+新建两个练习文件：
+
+- `make_demo_db.py`：创建模拟岗位数据库。
+- `jobs_export_demo.py`：从数据库读取岗位并导出 JSON。
+
+接触的主要操作：
+
+```python
+conn = sqlite3.connect(db_path)
+rows = conn.execute("SELECT title, city FROM jobs").fetchall()
+conn.close()
+```
+
+以及：
+
+```python
+jobs = []
+
+for row in rows:
+    job = {
+        "title": row[0],
+        "city": row[1]
+    }
+    jobs.append(job)
+```
+
+此外复习了 `CREATE TABLE IF NOT EXISTS`、`executemany()`、`INSERT OR IGNORE` 和 `conn.commit()`。
+
+**状态：已提供完整练习步骤；当天没有收到最终运行成功的明确确认。**
+
+## 3. 我独立完成的部分
+
+有明确证据：
+
+- 完成最初的岗位 JSON 导出练习。
+- 修改岗位列表，增加第三条岗位。
+- 主动指出自己不理解 `all_jobs.py` 的整体作用，并通过提问澄清。
+
+尚不能算作独立完成：
+
+- 城市分类统计完整代码。
+- 字典推导式的空白复现。
+- SQLite 到 JSON 的完整导出程序。
+
+## 4. 有提示后完成的部分
+
+- 理解 `jobs`、`payload`、`total_jobs` 的数据组织关系。
+- 理解 for 循环和 `.get()` 如何完成分类计数。
+- 理解普通 for 循环与字典推导式的对应关系。
+- 理解 SQLite 查询结果如何转换为 Python 字典和列表。
+- 理解 `all_jobs.py` 在 Scanner 项目中的位置及用途。
+
+这些以跟随讲解和理解为主，暂未通过闭卷复现验证。
+
+## 5. 由 ChatGPT 提供、我只是参考或运行的代码
+
+- `jobs_export_demo.py` 初始代码。
+- 城市分类统计代码。
+- `dict_comprehension_demo.py`。
+- `make_demo_db.py`。
+- SQLite 查询与 `jobs.append(job)` 的转换代码。
+
+需要注意：参考代码能够运行，不代表已经能够独立编写。
+
+## 6. 我现在讲不清的地方（解释债）
+
+1. 独立从空白编写 SQLite → JSON 的完整导出流程。
+2. 不看参考写出 `city_counts` 统计逻辑。
+3. 不看参考写出字典推导式。
+4. 熟练区分数据库返回的元组、Python 字典和列表。
+5. 理解真实 Scanner 的 `store.all_jobs(source)` 如何封装数据库查询。
+6. 理解真实项目中的字段清理、临时文件写入及替换机制。
+
+其中最优先解决的是第 1、2、4 项。
+
+## 7. 今日真实 Bug
+
+**未记录到明确的程序运行报错或修复过程。**
+
+今天出现的是概念理解上的阻碍：
+
+- **现象：** 不理解真实项目的 `all_jobs.py` 到底在完成什么工作。
+- **最初问题：** 已经有数据库，为什么还需要 JSON 导出？
+- **澄清后的原因：** 尚未建立长期数据存储与对外导出之间的完整数据流认识。
+- **是否自己定位：** 主动发现理解缺口并提出问题；解释由 ChatGPT 提供。
+
+这属于学习中的理解问题，不计入真实软件 Bug 修复成果。
+
+## 8. 今日能力状态与证据
+
+| 能力 | 状态 | 证据 |
+|---|---|---|
+| Python 列表与字典 | 🟡 | 完成基础岗位数据练习 |
+| JSON 文件导出 | 🟡 | 确认完成初次导出，但未闭卷复现 |
+| for 循环分类统计 | ⚪ | 已学习，未验证独立编写 |
+| 字典 `.get()` | 🟡 | 理解用法，闭卷复现仍待验证 |
+| 字典推导式 | ⚪ | 已讲解，缺少独立运行和复现证据 |
+| SQLite 查询 | 🟡 | 具备此前学习基础，本次完整导出未验证 |
+| 项目数据流理解 | 🟡 | 理解 all_jobs 的总体职责 |
+| 真实 Scanner 源码阅读 | 🔴 | 仍依赖拆解和示例，尚无法独立解释完整函数 |
+
+注：🟢 需要独立复现、解释数据流、定位注入故障，并经过独立 Gate 审查；本日不授予 🟢。
+
+## 9. 待验证项
+
+- [ ] 确认 `make_demo_db.py` 已成功生成 `jobs_demo.db`。
+- [ ] 确认导出程序读取到 4 条岗位。
+- [ ] 确认 `jobs_demo.json` 中的 `total_jobs` 为 4。
+- [ ] 确认 `city_counts` 为西安 2、北京 1、上海 1。
+- [ ] 能够独立解释 `fetchall()`、`row[0]`、`row[1]` 和 `jobs.append(job)`。
+- [ ] 能在不查看参考的情况下，完成简化版岗位数据转换。
+- [ ] 对照真实 `all_jobs.py`，找出数据库读取、岗位整理、JSON 导出的位置。
+
+## 10. 今日总结
+
+今天的主要进展不是学习了多少新语法，而是正式开始把已经接触过的 Python、SQLite 和 JSON 知识放进同一个实际工程功能中。
+
+第一次建立了对 Scanner `all_jobs.py` 的整体认识：
+
+**它是负责将数据库中的岗位记录整理并导出为 JSON 的模块。**
+
+目前对这一流程的概念理解比之前清晰，但完整程序的独立编写能力尚未得到验证。
+
+**下一次学习起点：** 先确认 SQLite → JSON Demo 运行成功，再与真实 Scanner 的 `all_jobs.py` 逐段对照，不急着添加更多新知识。

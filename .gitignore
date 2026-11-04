@@ -13,3 +13,9 @@ __pycache__/
 *.db-wal
 *.db-shm
 *.db-journal
+# 本地环境文件
+.env.*
+!.env.example
+!.env.sample
+venv/
+*.pyc

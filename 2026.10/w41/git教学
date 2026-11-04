@@ -1,0 +1,493 @@
+你现在确实应该开始认真使用 Git 了。因为你已经不再是只写一个 `practice.py` 的阶段，而是在不断修改同一个 Mini Project：接入 LM Studio、改成 DeepSeek、加入 Pydantic、pytest 和异常处理。
+
+Git 最适合解决的就是你现在遇到的问题：一个文件被改了很多次，怎么保存不同版本、比较变化、找回以前的代码。
+
+先确认截图里的三个结果：
+
+`.env` 已被 Git 忽略，显示 `!!`
+
+HTTP Mock 测试通过，`3 passed`
+
+SQLite 查询成功，`analyses` 表里有一条真实记录
+
+之前暴露的密钥仍然需要在服务商后台轮换。这与 Git 忽略是否生效是两件事。
+
+## 一、Git 到底怎么保存版本？
+
+可以把 Git 想成游戏存档。
+
+假设你的 `llm.py` 经历了三个版本
+
+存档 A
+
+Commit
+
+最初使用 LM Studio 本地模型
+
+存档 B
+
+Commit
+
+换成 DeepSeek 官方云端 API
+
+存档 C
+
+Commit
+
+加入 HTTP 错误处理和 Token 记录
+
+每个 Commit 就是一次版本快照。以后可以查看 A、B、C 之间修改了什么。
+
+注意一个关键点：
+
+Git 不是你按 Ctrl+S 就自动创建历史版本。
+
+- `Ctrl+S`：保存到硬盘。
+- `git add`：选择哪些修改进入下一次存档。
+- `git commit`：正式创建一个版本记录。
+- `git log`：查看以前的存档。
+- `git diff`：查看代码修改前后的差异。
+
+还有，`commit` 是保存到本地 Git 仓库，不需要上传 GitHub。
+
+## 二、先做一次真正的 Git 存档
+
+你的截图里，很多文件右边都是 `U`。
+
+这个 `U` 是 Untracked，表示 Git 还没有正式跟踪它们。
+
+所以即使你之前反复修改了 `llm.py`，也不能假设 Git 已经保存了每次修改的历史。
+
+我们现在就为目前的 DeepSeek 版本建立第一个 Git 基线。
+
+### 第一步：查看当前状态
+
+在 PowerShell 执行：
+
+```
+cd D:\代码学习
+
+git status --short -- 2026.09/w39/llm_api_practice/llm.py
+```
+
+如果显示：
+
+```
+?? 2026.09/w39/llm_api_practice/llm.py
+```
+
+说明它还没有被 Git 跟踪。
+
+### 第二步：选择需要保存的文件
+
+这次先只保存两个文件，避免把整个学习目录都提交了：
+
+```
+git add -- .gitignore 2026.09/w39/llm_api_practice/llm.py
+```
+
+这里的 `git add` 就是：
+
+> 我决定把这两个文件放进下一次 Git 存档。
+
+现在还没有正式存档。
+
+### 第三步：检查准备保存什么
+
+```
+git diff --cached
+```
+
+这会显示准备提交的代码内容。
+
+这是你以后使用 Codex 时也特别值得养成的习惯：提交前先检查，避免误把 API Key 或敏感数据保存进去。
+
+如果发现有真实密钥，先停止提交并处理。
+
+### 第四步：创建 Commit
+
+检查确认安全后：
+
+```
+git commit -m "保存 DeepSeek API 调用版本"
+```
+
+`-m` 后面的文字就是这个存档的名字。
+
+建议以后写清楚改了什么，比如：
+
+```
+添加 Pydantic 数据校验
+修复 DeepSeek 超时处理
+增加 HTTP Mock 测试
+```
+
+这样几个月后你还知道每个版本的用途。
+
+## 三、以后怎么查看以前的版本？
+
+这里有两种方法。
+
+### 方法 A：VS Code 图形界面（推荐你优先学）
+
+VS Code 本身就集成了 Git，不一定要全部使用命令行。
+
+在左侧点击  源代码管理（Source Control），就能看到修改过的文件。
+
+点击具体文件，可以比较代码与 Git 版本之间的差异。
+
+比如你以后在 `llm.py` 中修改：
+
+```
+timeout=(10, 90)
+```
+
+变成：
+
+```
+timeout=(10, 120)
+```
+
+Git Diff 就可以显示哪一行被改了。
+
+Git Diff 示意
+
+timeout=(10, 90)
+
+timeout=(10, 120)
+
+要查看一个文件的旧版本，你可以打开 `llm.py`，在资源管理器里找到 时间线（Timeline） 视图，查看这个文件关联的 Git 提交记录；也可以在源代码管理的 Graph 视图里查看历史。
+
+### 方法 B：使用 Git 命令
+
+查看最近的存档：
+
+```
+git log --oneline -5
+```
+
+可能显示：
+
+```
+a83f129 保存 DeepSeek API 调用版本
+f7d2a14 添加 Pydantic 校验
+b1e4c20 首次实现 LLM 调用
+```
+
+前面的字符是 Commit ID，相当于存档编号。
+
+如果你只想查看 `llm.py` 的历史：
+
+```
+git log --oneline -- 2026.09/w39/llm_api_practice/llm.py
+```
+
+再想看某次提交究竟修改了哪些代码：
+
+```
+git show a83f129 -- 2026.09/w39/llm_api_practice/llm.py
+```
+
+这里的 `a83f129` 只是示例，需要替换为你自己实际看到的 Commit ID。
+
+查看旧版本并不会自动替换当前文件，所以这些查询操作是安全的。
+
+## 四、以后修改文件的标准工作流程
+
+例如下周你准备继续修改 `llm.py`，增加重试机制。
+
+我希望你逐渐形成这个习惯：
+
+1. 修改前
+
+   确认当前代码已经有 Git 存档。
+2. 修改代码
+
+   自己写或者让 Codex 修改。
+3. 检查修改
+   ```
+   git diff
+   ```
+4. 运行测试
+   ```
+   python -m pytest -q
+   ```
+5. 创建新的存档
+   ```
+   git add -- 具体文件路径
+   git commit -m "增加 LLM 请求重试处理"
+   ```
+
+以后如果 AI 修改坏了代码，可以先查看旧版本并比较差异。Git 也支持恢复旧版本，但 `git restore` 等命令可能覆盖尚未保存的改动，所以我们暂时先不练恢复，等你理解提交和历史后再教。
+
+## 五、哪些 Git 命令需要记住？
+
+| 命令                   | 学习要求            |
+| -------------------- | --------------- |
+| `git status`         | 必须会用            |
+| `git diff`           | 必须会用            |
+| `git add`            | 必须会用            |
+| `git commit`         | 必须会用            |
+| `git log`            | 理解并能查阅          |
+| `git show`           | 理解即可            |
+| `git restore`        | 暂时不操作           |
+| `git branch / merge` | 后面再学            |
+| `git push`           | 需要上传 GitHub 时再练 |
+
+尤其你以后跟 Codex 协作：
+
+> 先看 status → AI 修改 → 看 diff → 运行测试 → Commit。
+
+这条工作流比记住几十条 Git 命令更重要。
+
+## 现在先做今天第一轮 Git 实操
+
+先只完成这次 DeepSeek 版本存档：
+
+```
+cd D:\代码学习
+
+git add -- .gitignore 2026.09/w39/llm_api_practice/llm.py
+
+git diff --cached
+```
+
+确认没有密钥后：
+
+```
+git commit -m "保存 DeepSeek API 调用版本"
+git log --oneline -3
+```
+
+把最后的终端截图给我。
+
+下一步我们就直接用你的 `llm.py` 做一次 Git Diff 对比实验：改一行代码 → 看 Git 怎样显示变化 → 比较旧版本 → 再保存新版本。
+
+这样你就不是听一遍 Git 理论，而是实际有两次存档可以查看和比较。
+
+补充一点： 当前只是给 `llm.py` 建立初始版本，`main.py`、`storage.py` 等仍需后续纳入 Git。我们之后可以把整个 Mini Project 的安全文件建立一次完整基线，但必须先排除 `.env`、数据库中的私人数据及其他敏感配置。
+你现在需要的不是再学更多 Git 命令，而是把已经用过的这些命令整理成一套固定操作流程。
+
+而且你刚才提到的 `cached`、`oneline`、`-m`，它们并不是新的 Git 功能，而是给 Git 命令增加的选项（Options）。
+
+我给你做一份可以直接放进 W41 Learning Log、以后打开就能照着操作的 Git 小结。
+
+# W41｜Git 基础实操小结
+
+## 一、Git 最重要的三个区域
+
+① 工作区（Working Directory）
+
+你正在 VS Code 修改的代码
+
+git add
+
+② 暂存区（Staging Area）
+
+准备保存到下一次 Commit 的内容
+
+git commit
+
+③ Git 仓库历史（Repository）
+
+已经正式保存的版本记录
+
+你可以把它理解成：
+
+- `git add`：选好准备存档的内容。
+- `git commit`：真正创建存档。
+- `git log`：翻看以前存过哪些档。
+- `git diff`：比较存档前后的变化。
+
+## 二、以后每次修改代码，都遵循这套流程
+
+假设以后你要继续修改 `llm.py`。
+
+### 1
+
+查看文件状态
+
+```
+git status --short
+```
+
+看哪些文件改了，哪些还是 `U`（未跟踪）。你看到的 `M` 就表示文件已修改。
+
+### 2
+
+查看你修改了什么
+
+```
+git diff -- 2026.09/w39/llm_api_practice/llm.py
+```
+
+红色 `-` 是旧代码，绿色 `+` 是新代码。
+
+这一步是提交前的第一次审查。
+
+### 3
+
+运行测试
+
+```
+cd D:\代码学习\2026.09\w39\llm_api_practice
+python -m pytest -q
+```
+
+这是检查代码是否仍然按预期运行，并不是 Git 命令。
+
+### 4
+
+选择要提交的文件
+
+回到 Git 根目录后：
+
+```
+cd D:\代码学习
+git add -- 2026.09/w39/llm_api_practice/llm.py
+```
+
+这只是放入暂存区，尚未创建历史版本。
+
+### 5
+
+最后检查准备提交的内容
+
+```
+git diff --cached
+```
+
+这一步特别重要，检查有没有多余修改、密钥或不应该提交的内容。
+
+### 6
+
+正式保存版本
+
+```
+git commit -m "修复 API 错误处理"
+```
+
+创建一条可以日后查询的历史记录。Commit 是本地存档，不等于上传 GitHub。
+
+最值得背的是这个顺序：
+
+`status → diff → test → add → diff --cached → commit`
+
+另外，未来如果只是改一个 Python 文件，就只 `git add` 那个文件。你当前的 `D:\代码学习` 是一个包含很多练习和项目的大仓库，不建议随便使用 `git add .`。
+
+## 三、那些 `-m`、`--cached`、`--oneline` 到底是什么？
+
+Git 命令有一个常见结构：
+
+```
+git  命令  选项  目标
+```
+
+例如：
+
+```
+git log --oneline -5 -- 2026.09/w39/llm_api_practice/llm.py
+```
+
+| 内容          | 含义              | 要不要背 |
+| ----------- | --------------- | ---- |
+| `git`       | 调用 Git          | 要    |
+| `status`    | 查看状态            | 要    |
+| `diff`      | 比较变化            | 要    |
+| `add`       | 添加到暂存区          | 要    |
+| `commit`    | 创建版本            | 要    |
+| `-m`        | message，后面接提交说明 | 要    |
+| `--cached`  | 查看已经暂存的差异       | 会用   |
+| `--oneline` | 每个 Commit 显示成一行 | 会用   |
+| `-5`        | 只显示最近 5 条       | 理解即可 |
+| `--short`   | 用简短格式显示         | 理解即可 |
+| `--`        | 分隔命令选项和文件路径     | 理解即可 |
+
+这里重点区分两组：
+
+### `git diff` 和 `git diff --cached`
+
+```
+git diff
+```
+
+看的是工作区还没有暂存的修改。
+
+```
+git diff --cached
+```
+
+看的是已经 `git add`、准备提交的修改。
+
+因此如果你执行完 `git add`，发现普通 `git diff` 没有输出，不代表代码消失了，而可能是修改已经进入暂存区。
+
+### `git commit -m` 和 `git log --oneline`
+
+```
+git commit -m "增加异常处理"
+```
+
+`-m` 是给本次提交写一条说明。
+
+```
+git log --oneline
+```
+
+`--oneline` 只是让以前的 Commit 显示得简洁一些，不会修改历史。
+
+## 四、以后怎样查询历史版本？
+
+你今天已经创建了两个 Commit：
+
+```
+01ca9c7  调整 DeepSeek API 超时时间
+dca40f3  建立 DeepSeek API 基线
+```
+
+### 查询所有最近的版本
+
+```
+git log --oneline -5
+```
+
+### 只查询某个文件的版本历史
+
+```
+git log --oneline -- 2026.09/w39/llm_api_practice/llm.py
+```
+
+### 查看一次 Commit 改动了什么
+
+```
+git show 01ca9c7
+```
+
+这会显示这个 Commit 引入的修改。
+
+### 比较两个指定的 Commit
+
+```
+git diff dca40f3 01ca9c7 -- 2026.09/w39/llm_api_practice/llm.py
+```
+
+这就能看到 `90 → 130` 的变化。
+
+但你平时完全可以优先使用 VS Code Timeline：选中旧版本，再选择新版本比较。你今天已经成功操作过了，不需要非得用终端命令。
+
+## 五、以后你真正要形成的 Git 习惯
+
+你的目标不是成为 Git 专家，而是实现：
+
+修改前有版本，修改后有证据，改坏了能找到旧版本。
+
+所以当前阶段只要求：
+
+- 能用 `status` 知道修改了什么。
+- 能用 `diff` 检查修改是否符合预期。
+- 能用 `add + commit` 创建一次存档。
+- 能用 `log` 或 VS Code Timeline 找到以前的版本。
+- 能理解 Git 版本历史和普通文件保存（Ctrl+S）不是一回事。
+
+至于 `branch`、`merge`、`rebase`、`reset`，暂时不要求学习。
+
+我建议把上面的六步当成你以后使用 Codex 修改项目代码时的固定流程。 不用每天专门花一小时背 Git，但每次实际改项目都走一遍，反复使用自然就熟悉了。
