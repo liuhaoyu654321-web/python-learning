@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎰 炫酷决策转盘 · 今天吃啥扭蛋机</title>
+  <style>
+    :root {
+      --bg: #0b1021;
+      --bg-glow-1: #1d2654;
+      --bg-glow-2: #2b1644;
+      --card: rgba(19, 27, 53, 0.86);
+      --card-border: rgba(132, 162, 255, 0.22);
+      --text: #eef2ff;
+      --muted: #98a4c7;
+      --accent: #ffcf4d;
+      --accent-2: #4ce0d2;
+      --danger: #ff5c7a;
+      --success: #38e59d;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Microsoft YaHei", "PingFang SC", system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 15%, var(--bg-glow-1) 0%, transparent 45%),
+        radial-gradient(circle at 85% 20%, var(--bg-glow-2) 0%, transparent 45%),
+        var(--bg);
+      padding: 16px 20px 24px;
+    }
+
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 99;
+    }
+
+    .container {
+      max-width: 1220px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* 顶部栏 */
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 18px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      letter-spacing: 0.5px;
+      background: linear-gradient(90deg, #ffe27a, #ff7eb3, #5ce1e6);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .hot-badge {
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(56, 229, 157, 0.14);
+      border: 1px solid rgba(56, 229, 157, 0.45);
+      color: #8bf7c7;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-ghost {
+      cursor: pointer;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      padding: 7px 12px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      transition: transform 0.12s, background 0.15s;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.14);
+      transform: translateY(-1px);
+    }
+
+    /* 抓虫雷达卡 */
+    #bug-radar {
+      display: none;
+      padding: 14px 18px;
+      border-radius: 14px;
+      background: rgba(84, 16, 36, 0.92);
+      border: 1px solid rgba(255, 92, 122, 0.7);
+      box-shadow: 0 8px 28px rgba(255, 50, 90, 0.25);
+    }
+
+    #bug-radar.show {
+      display: block;
+      animation: shake 0.35s ease;
+    }
+
+    .bug-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .bug-title {
+      font-weight: 700;
+      color: #ffd1da;
+      font-size: 1rem;
+    }
+
+    .bug-code {
+      margin: 6px 0;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.38);
+      font-family: Consolas, Monaco, monospace;
+      font-size: 0.86rem;
+      color: #ffe28a;
+      overflow-x: auto;
+    }
+
+    .bug-msg {
+      color: #ffadb9;
+      font-size: 0.9rem;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    /* 主体双栏 */
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(340px, 1.15fr) minmax(320px, 0.95fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 16px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+    }
+
+    /* 左侧转盘舞台 */
+    .stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .filters-box {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .budget-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 0.9rem;
+    }
+
+    .budget-row input[type="range"] {
+      flex: 1;
+      min-width: 140px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .budget-pill {
+      min-width: 72px;
+      text-align: center;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(255, 207, 77, 0.16);
+      border: 1px solid rgba(255, 207, 77, 0.5);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .count-pill {
+      font-size: 0.82rem;
+      color: var(--accent-2);
+      font-weight: 600;
+    }
+
+    .tags-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tags-label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-right: 4px;
+    }
+
+    .tag-chip {
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      transition: all 0.15s;
+    }
+
+    .tag-chip.excluded {
+      background: rgba(255, 92, 122, 0.22);
+      border-color: rgba(255, 92, 122, 0.8);
+      color: #ffd0d9;
+      text-decoration: line-through;
+    }
+
+    /* 转盘容器 */
+    .wheel-wrap {
+      position: relative;
+      width: 390px;
+      max-width: 100%;
+      aspect-ratio: 1 / 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 4px 0;
+    }
+
+    #wheel-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.55));
+    }
+
+    .pointer {
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 15px solid transparent;
+      border-right: 15px solid transparent;
+      border-top: 30px solid #ffcf4d;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.65));
+      transform-origin: 50% 6px;
+      transition: transform 0.06s ease-out;
+      z-index: 5;
+    }
+
+    .pointer.tick {
+      transform: translateX(-50%) rotate(-16deg);
+    }
+
+    .spin-btn {
+      cursor: pointer;
+      width: 100%;
+      max-width: 320px;
+      padding: 13px 24px;
+      border: none;
+      border-radius: 999px;
+      font-size: 1.12rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #16182c;
+      background: linear-gradient(135deg, #ffe270 0%, #ff9f43 55%, #ff6b8b 100%);
+      box-shadow: 0 8px 26px rgba(255, 164, 72, 0.42);
+      transition: transform 0.14s, box-shadow 0.14s, opacity 0.15s;
+    }
+
+    .spin-btn:hover:not(:disabled) {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 12px 32px rgba(255, 164, 72, 0.6);
+    }
+
+    .spin-btn:active:not(:disabled) {
+      transform: translateY(1px) scale(0.99);
+    }
+
+    .spin-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+      box-shadow: none;
+    }
+
+    /* 中奖结果横幅 */
+    #winner-banner {
+      width: 100%;
+      min-height: 62px;
+      padding: 10px 16px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px dashed rgba(255, 255, 255, 0.14);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    #winner-banner.win {
+      border-style: solid;
+      border-color: rgba(255, 207, 77, 0.72);
+      background: linear-gradient(135deg, rgba(255, 207, 77, 0.18), rgba(76, 224, 210, 0.14));
+      color: #fff8db;
+      animation: popIn 0.35s cubic-bezier(0.22, 1.35, 0.36, 1);
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.9); opacity: 0.4; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* 右侧栏 */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mini-btn {
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--muted);
+      padding: 3px 9px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+    }
+
+    .mini-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    /* 分类战绩条 */
+    .stats-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .stat-row {
+      display: grid;
+      grid-template-columns: 62px 1fr 40px;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+    }
+
+    .stat-track {
+      height: 11px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .stat-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #4ce0d2, #5f8bff, #ff85b3);
+      transition: width 0.4s ease;
+    }
+
+    .stat-val {
+      text-align: right;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* 签池列表 */
+    .item-list {
+      max-height: 225px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-right: 4px;
+      margin-bottom: 10px;
+    }
+
+    .item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 0.86rem;
+    }
+
+    .item-row.filtered-out {
+      opacity: 0.42;
+    }
+
+    .item-main {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .item-num {
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 0.78rem;
+      min-width: 24px;
+    }
+
+    .item-badge {
+      font-size: 0.74rem;
+      padding: 1px 6px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.09);
+      color: var(--muted);
+    }
+
+    .item-filtered {
+      font-size: 0.72rem;
+      padding: 1px 6px;
+      border-radius: 6px;
+      background: rgba(255, 92, 122, 0.2);
+      color: #ffb4c2;
+    }
+
+    .del-btn {
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.9rem;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    .del-btn:hover {
+      color: #fff;
+      background: rgba(255, 92, 122, 0.55);
+    }
+
+    /* 添加表单 */
+    .add-form {
+      display: grid;
+      grid-template-columns: 1.3fr 0.8fr 0.7fr;
+      gap: 6px;
+    }
+
+    .add-form input {
+      width: 100%;
+      padding: 7px 9px;
+      border-radius: 9px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(9, 13, 28, 0.75);
+      color: var(--text);
+      font-size: 0.84rem;
+      outline: none;
+    }
+
+    .add-form input:focus {
+      border-color: var(--accent-2);
+    }
+
+    .add-tags-row {
+      grid-column: 1 / 3;
+    }
+
+    .add-submit {
+      cursor: pointer;
+      border: none;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #4ce0d2, #5f8bff);
+      color: #091024;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 7px 10px;
+    }
+
+    .add-submit:hover {
+      filter: brightness(1.08);
+    }
+
+    /* 最近记录 */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .history-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.83rem;
+      padding: 6px 10px;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .empty-tip {
+      color: var(--muted);
+      font-size: 0.84rem;
+      text-align: center;
+      padding: 8px 0;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="container">
+    <header class="topbar">
+      <div class="brand">
+        <h1>🎰 炫酷决策转盘</h1>
+        <span class="hot-badge">⚡ 改完 logic.py 按 Ctrl+S，直接点按钮即生效</span>
+      </div>
+      <div class="top-actions">
+        <button id="sound-toggle" class="btn-ghost" type="button">🔊 音效开</button>
+        <button id="refresh-btn" class="btn-ghost" type="button">🔄 刷新逻辑</button>
+      </div>
+    </header>
+
+    <section id="bug-radar" aria-live="polite">
+      <div class="bug-head">
+        <span class="bug-title" id="bug-title">🐛 抓虫雷达：logic.py 出错啦</span>
+        <button id="bug-retry" class="btn-ghost" type="button">修好了，重试</button>
+      </div>
+      <div class="bug-code" id="bug-code"></div>
+      <div class="bug-msg" id="bug-msg"></div>
+    </section>
+
+    <div class="main-grid">
+      <!-- 左侧转盘区 -->
+      <section class="card stage">
+        <div class="filters-box">
+          <div class="budget-row">
+            <span>💰 预算上限：</span>
+            <input id="budget-slider" type="range" min="14" max="50" step="1" value="14" />
+            <span id="budget-label" class="budget-pill">不限</span>
+            <button id="budget-reset" class="mini-btn" type="button">不限</button>
+            <span id="candidate-count" class="count-pill">当前上盘：0 / 0 项</span>
+          </div>
+          <div class="tags-row" id="tags-row">
+            <span class="tags-label">🚫 避雷标签（点击排除）：</span>
+          </div>
+        </div>
+
+        <div class="wheel-wrap">
+          <div id="pointer" class="pointer"></div>
+          <canvas id="wheel-canvas" width="420" height="420"></canvas>
+        </div>
+
+        <button id="spin-btn" class="spin-btn" type="button">🎲 开始抽签！</button>
+
+        <div id="winner-banner">点上面「开始抽签」，看看今天天命选谁！</div>
+      </section>
+
+      <!-- 右侧战绩与管理区 -->
+      <aside class="sidebar">
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">📊 分类战绩榜</h2>
+            <button id="clear-history-btn" class="mini-btn" type="button">清空战绩</button>
+          </div>
+          <div id="stats-list" class="stats-list"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">📝 签池管理</h2>
+            <span class="tags-label" id="pool-total">共 0 项</span>
+          </div>
+          <div id="item-list" class="item-list"></div>
+          <form id="add-form" class="add-form">
+            <input id="add-name" type="text" placeholder="名称（如：螺蛳粉）" required />
+            <input id="add-category" type="text" placeholder="分类（如：小吃）" />
+            <input id="add-price" type="number" min="0" placeholder="价格（元）" />
+            <input id="add-tags" class="add-tags-row" type="text" placeholder="标签，逗号隔开（如：辣, 热乎）" />
+            <button class="add-submit" type="submit">＋ 添加</button>
+          </form>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">🕒 最近抽中</h2>
+          </div>
+          <div id="history-list" class="history-list"></div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const SLICE_COLORS = [
+      "#ff6b8b", "#ffa94d", "#ffd43b", "#51cf66",
+      "#38d9a9", "#4dabf7", "#748ffc", "#b197fc"
+    ];
+    const TWO_PI = Math.PI * 2;
+
+    const state = {
+      items: [],
+      candidates: [],
+      history: [],
+      stats: {},
+      allTags: [],
+      excludedTags: new Set(),
+      maxPrice: 0,
+      currentAngle: 0,
+      spinning: false,
+      soundOn: true,
+      audioCtx: null,
+    };
+
+    const wheelCanvas = document.getElementById("wheel-canvas");
+    const wheelCtx = wheelCanvas.getContext("2d");
+    const confettiCanvas = document.getElementById("confetti-canvas");
+    const confettiCtx = confettiCanvas.getContext("2d");
+    const pointerEl = document.getElementById("pointer");
+    const spinBtn = document.getElementById("spin-btn");
+    const winnerBanner = document.getElementById("winner-banner");
+    const budgetSlider = document.getElementById("budget-slider");
+    const budgetLabel = document.getElementById("budget-label");
+    const candidateCount = document.getElementById("candidate-count");
+    const tagsRow = document.getElementById("tags-row");
+    const statsList = document.getElementById("stats-list");
+    const itemList = document.getElementById("item-list");
+    const historyList = document.getElementById("history-list");
+    const poolTotal = document.getElementById("pool-total");
+    const bugRadar = document.getElementById("bug-radar");
+    const bugTitle = document.getElementById("bug-title");
+    const bugCode = document.getElementById("bug-code");
+    const bugMsg = document.getElementById("bug-msg");
+
+    function setupHighDpiWheel() {
+      const dpr = window.devicePixelRatio || 1;
+      const size = 420;
+      wheelCanvas.width = size * dpr;
+      wheelCanvas.height = size * dpr;
+      wheelCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function ensureAudio() {
+      if (!state.soundOn) return null;
+      if (!state.audioCtx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) state.audioCtx = new AudioCtx();
+      }
+      if (state.audioCtx && state.audioCtx.state === "suspended") {
+        state.audioCtx.resume().catch(() => {});
+      }
+      return state.audioCtx;
+    }
+
+    function playTick() {
+      const ctx = ensureAudio();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(680, now);
+      osc.frequency.exponentialRampToValueAtTime(220, now + 0.035);
+      gain.gain.setValueAtTime(0.11, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.042);
+
+      pointerEl.classList.add("tick");
+      clearTimeout(pointerEl._tickTimer);
+      pointerEl._tickTimer = setTimeout(() => pointerEl.classList.remove("tick"), 65);
+    }
+
+    function playWinChime() {
+      const ctx = ensureAudio();
+      if (!ctx) return;
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((freq, i) => {
+        const start = ctx.currentTime + i * 0.07;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, start);
+        gain.gain.setValueAtTime(0.14, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.36);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + 0.38);
+      });
+    }
+
+    let confettiParticles = [];
+    let confettiAnimId = null;
+
+    function launchConfetti() {
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+      confettiParticles = Array.from({ length: 88 }, () => ({
+        x: window.innerWidth * 0.36 + (Math.random() - 0.5) * 260,
+        y: window.innerHeight * 0.42,
+        vx: (Math.random() - 0.5) * 12,
+        vy: -Math.random() * 11 - 3,
+        size: Math.random() * 7 + 4,
+        color: SLICE_COLORS[Math.floor(Math.random() * SLICE_COLORS.length)],
+        rot: Math.random() * TWO_PI,
+        vrot: (Math.random() - 0.5) * 0.25,
+        life: 1,
+      }));
+      if (confettiAnimId) cancelAnimationFrame(confettiAnimId);
+      const step = () => {
+        confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        confettiParticles.forEach((p) => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.34;
+          p.rot += p.vrot;
+          p.life -= 0.012;
+          if (p.life > 0) {
+            confettiCtx.save();
+            confettiCtx.globalAlpha = Math.max(0, p.life);
+            confettiCtx.translate(p.x, p.y);
+            confettiCtx.rotate(p.rot);
+            confettiCtx.fillStyle = p.color;
+            confettiCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+            confettiCtx.restore();
+          }
+        });
+        confettiParticles = confettiParticles.filter((p) => p.life > 0);
+        if (confettiParticles.length > 0) {
+          confettiAnimId = requestAnimationFrame(step);
+        } else {
+          confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+          confettiAnimId = null;
+        }
+      };
+      step();
+    }
+
+    function showBugRadar(err) {
+      const lineText = err.line !== undefined ? `第 ${err.line} 行` : "";
+      bugTitle.textContent = `🐛 抓虫雷达：logic.py ${lineText} · ${err.type || "Error"}`;
+      bugCode.textContent = err.code ? `出错代码：${err.code}` : "请检查 logic.py 中的语法或函数逻辑";
+      bugCode.style.display = err.code ? "block" : "none";
+      bugMsg.textContent = `错误原因：${err.message || "未知错误"}`;
+      bugRadar.classList.add("show");
+    }
+
+    function hideBugRadar() {
+      bugRadar.classList.remove("show");
+    }
+
+    function drawWheel(angle, bulbPhase = 0) {
+      const size = 420;
+      const cx = size / 2;
+      const cy = size / 2;
+      const outerR = 196;
+      const wheelR = 178;
+
+      wheelCtx.clearRect(0, 0, size, size);
+
+      // 外圈霓虹框
+      wheelCtx.save();
+      wheelCtx.beginPath();
+      wheelCtx.arc(cx, cy, outerR, 0, TWO_PI);
+      wheelCtx.fillStyle = "#192248";
+      wheelCtx.fill();
+      wheelCtx.lineWidth = 4;
+      wheelCtx.strokeStyle = "rgba(255, 207, 77, 0.72)";
+      wheelCtx.stroke();
+
+      // 跑马灯小灯泡
+      const bulbCount = 16;
+      for (let i = 0; i < bulbCount; i++) {
+        const ba = (i / bulbCount) * TWO_PI;
+        const bx = cx + Math.cos(ba) * (outerR - 9);
+        const by = cy + Math.sin(ba) * (outerR - 9);
+        const lit = (i + bulbPhase) % 2 === 0;
+        wheelCtx.beginPath();
+        wheelCtx.arc(bx, by, 4.2, 0, TWO_PI);
+        wheelCtx.fillStyle = lit ? "#ffe680" : "rgba(255, 255, 255, 0.25)";
+        wheelCtx.fill();
+      }
+
+      const list = state.candidates;
+      if (!list.length) {
+        wheelCtx.beginPath();
+        wheelCtx.arc(cx, cy, wheelR, 0, TWO_PI);
+        wheelCtx.fillStyle = "#131b37";
+        wheelCtx.fill();
+        wheelCtx.fillStyle = "#ffb4c2";
+        wheelCtx.font = "bold 17px Microsoft YaHei, sans-serif";
+        wheelCtx.textAlign = "center";
+        wheelCtx.textBaseline = "middle";
+        wheelCtx.fillText("筛太狠啦！", cx, cy - 14);
+        wheelCtx.fillStyle = "#98a4c7";
+        wheelCtx.font = "14px Microsoft YaHei, sans-serif";
+        wheelCtx.fillText("没有符合条件的选项，放宽点条件吧", cx, cy + 16);
+        wheelCtx.restore();
+        return;
+      }
+
+      const n = list.length;
+      const sliceAngle = TWO_PI / n;
+
+      for (let i = 0; i < n; i++) {
+        const start = angle + i * sliceAngle;
+        const end = start + sliceAngle;
+        const mid = start + sliceAngle / 2;
+
+        wheelCtx.beginPath();
+        wheelCtx.moveTo(cx, cy);
+        wheelCtx.arc(cx, cy, wheelR, start, end);
+        wheelCtx.closePath();
+        wheelCtx.fillStyle = SLICE_COLORS[i % SLICE_COLORS.length];
+        wheelCtx.fill();
+        wheelCtx.lineWidth = 2;
+        wheelCtx.strokeStyle = "#0b1021";
+        wheelCtx.stroke();
+
+        // 扇区文字
+        wheelCtx.save();
+        wheelCtx.translate(cx, cy);
+        wheelCtx.rotate(mid);
+        wheelCtx.textAlign = "right";
+        wheelCtx.textBaseline = "middle";
+        wheelCtx.fillStyle = "#101426";
+        const label = list[i].name.length > 7 ? list[i].name.slice(0, 7) + "…" : list[i].name;
+        wheelCtx.font = n > 10 ? "bold 12px Microsoft YaHei, sans-serif" : "bold 14px Microsoft YaHei, sans-serif";
+        wheelCtx.fillText(label, wheelR - 16, -6);
+        wheelCtx.font = "600 12px Microsoft YaHei, sans-serif";
+        wheelCtx.fillStyle = "rgba(16, 20, 38, 0.82)";
+        wheelCtx.fillText(`¥${list[i].price}`, wheelR - 16, 12);
+        wheelCtx.restore();
+      }
+
+      // 中心圆盘
+      wheelCtx.beginPath();
+      wheelCtx.arc(cx, cy, 30, 0, TWO_PI);
+      wheelCtx.fillStyle = "#10162f";
+      wheelCtx.fill();
+      wheelCtx.lineWidth = 4;
+      wheelCtx.strokeStyle = "#ffcf4d";
+      wheelCtx.stroke();
+
+      wheelCtx.fillStyle = "#ffe270";
+      wheelCtx.font = "bold 14px Microsoft YaHei, sans-serif";
+      wheelCtx.textAlign = "center";
+      wheelCtx.textBaseline = "middle";
+      wheelCtx.fillText("GO", cx, cy + 1);
+      wheelCtx.restore();
+    }
+
+    function updateBudgetUI() {
+      const maxVal = Math.max(50, ...state.items.map((x) => Number(x.price) || 0));
+      budgetSlider.max = String(maxVal);
+      if (state.maxPrice <= 0) {
+        budgetSlider.value = "14";
+        budgetLabel.textContent = "不限";
+      } else {
+        budgetSlider.value = String(Math.max(15, state.maxPrice));
+        budgetLabel.textContent = `≤ ¥${state.maxPrice}`;
+      }
+    }
+
+    function renderTags() {
+      const existing = new Set(state.allTags);
+      for (const t of Array.from(state.excludedTags)) {
+        if (!existing.has(t)) state.excludedTags.delete(t);
+      }
+
+      tagsRow.innerHTML = `<span class="tags-label">🚫 避雷标签（点击排除）：</span>`;
+      if (!state.allTags.length) {
+        const span = document.createElement("span");
+        span.className = "tags-label";
+        span.textContent = "暂无标签";
+        tagsRow.appendChild(span);
+        return;
+      }
+
+      state.allTags.forEach((tag) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        const isExcluded = state.excludedTags.has(tag);
+        btn.className = "tag-chip" + (isExcluded ? " excluded" : "");
+        btn.textContent = `🚫 ${tag}`;
+        btn.onclick = () => {
+          if (state.spinning) return;
+          if (state.excludedTags.has(tag)) state.excludedTags.delete(tag);
+          else state.excludedTags.add(tag);
+          fetchState();
+        };
+        tagsRow.appendChild(btn);
+      });
+    }
+
+    function renderStats() {
+      const entries = Object.entries(state.stats || {}).sort((a, b) => b[1] - a[1]);
+      if (!entries.length) {
+        statsList.innerHTML = `<div class="empty-tip">抽过一次后，这里会按分类自动统计战绩</div>`;
+        return;
+      }
+      const maxCount = Math.max(...entries.map((e) => e[1]), 1);
+      statsList.innerHTML = entries.map(([cat, cnt]) => {
+        const pct = Math.round((cnt / maxCount) * 100);
+        return `
+          <div class="stat-row">
+            <span>${escapeHtml(cat)}</span>
+            <div class="stat-track"><div class="stat-fill" style="width:${pct}%"></div></div>
+            <span class="stat-val">${cnt} 次</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderItems() {
+      poolTotal.textContent = `共 ${state.items.length} 项`;
+      candidateCount.textContent = `当前上盘：${state.candidates.length} / ${state.items.length} 项`;
+      spinBtn.disabled = state.spinning || state.candidates.length === 0;
+
+      if (!state.items.length) {
+        itemList.innerHTML = `<div class="empty-tip">签池空了，在下面添加一个吧！</div>`;
+        return;
+      }
+
+      const activeSet = new Set(state.candidates.map((c) => `${c.name}__${c.price}`));
+      itemList.innerHTML = state.items.map((item, idx) => {
+        const num = idx + 1;
+        const onWheel = activeSet.has(`${item.name}__${item.price}`);
+        const tagsHtml = (item.tags || []).map((t) => `<span class="item-badge">${escapeHtml(t)}</span>`).join("");
+        return `
+          <div class="item-row ${onWheel ? "" : "filtered-out"}">
+            <div class="item-main">
+              <span class="item-num">#${num}</span>
+              <strong>${escapeHtml(item.name)}</strong>
+              <span class="item-badge">${escapeHtml(item.category)} · ¥${item.price}</span>
+              ${tagsHtml}
+              ${onWheel ? "" : `<span class="item-filtered">已过滤</span>`}
+            </div>
+            <button class="del-btn" type="button" title="删除 #${num}" onclick="deleteItem(${num})">✕</button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderHistory() {
+      const recent = (state.history || []).slice(-6).reverse();
+      if (!recent.length) {
+        historyList.innerHTML = `<div class="empty-tip">还没有抽签记录</div>`;
+        return;
+      }
+      historyList.innerHTML = recent.map((h) => `
+        <div class="history-row">
+          <span>🎯 <strong>${escapeHtml(h.name)}</strong> <span class="item-badge">${escapeHtml(h.category)} · ¥${h.price}</span></span>
+          <span class="tags-label">${escapeHtml(h.time || "")}</span>
+        </div>
+      `).join("");
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function applyState(data) {
+      state.items = data.items || [];
+      state.candidates = data.candidates || [];
+      state.history = data.history || [];
+      state.stats = data.stats || {};
+      state.allTags = data.all_tags || [];
+      updateBudgetUI();
+      renderTags();
+      renderStats();
+      renderItems();
+      renderHistory();
+      if (!state.spinning) {
+        drawWheel(state.currentAngle, 0);
+      }
+    }
+
+    async function apiRequest(url, options = {}) {
+      const res = await fetch(url, options);
+      const data = await res.json();
+      if (!data.ok) {
+        showBugRadar(data.error || { message: "请求失败" });
+        return null;
+      }
+      hideBugRadar();
+      return data;
+    }
+
+    async function fetchState() {
+      const params = new URLSearchParams({
+        max_price: String(state.maxPrice),
+        exclude_tags: Array.from(state.excludedTags).join(","),
+      });
+      const data = await apiRequest(`/api/state?${params.toString()}`);
+      if (data) applyState(data);
+    }
+
+    async function spinWheel() {
+      if (state.spinning || !state.candidates.length) return;
+      ensureAudio();
+      state.spinning = true;
+      spinBtn.disabled = true;
+      winnerBanner.className = "";
+      winnerBanner.textContent = "转盘飞速旋转中，命运即将揭晓……";
+
+      const data = await apiRequest("/api/spin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          max_price: state.maxPrice,
+          exclude_tags: Array.from(state.excludedTags),
+        }),
+      });
+
+      if (!data || !data.winner) {
+        state.spinning = false;
+        if (data) applyState(data);
+        else spinBtn.disabled = false;
+        return;
+      }
+
+      // 保持当前盘面数量用于本次动画落地，避免转一半才刷新列表
+      state.candidates = data.candidates || [];
+      const n = state.candidates.length;
+      const winnerIndex = Math.max(0, Math.min(n - 1, data.winner_index || 0));
+      const sliceAngle = TWO_PI / n;
+      const jitter = (Math.random() - 0.5) * 0.6 * sliceAngle;
+      const desiredMod = (((1.5 * Math.PI - (winnerIndex + 0.5) * sliceAngle + jitter) % TWO_PI) + TWO_PI) % TWO_PI;
+      const currentMod = ((state.currentAngle % TWO_PI) + TWO_PI) % TWO_PI;
+      let delta = desiredMod - currentMod;
+      if (delta <= 0) delta += TWO_PI;
+      const extraTurns = (5 + Math.floor(Math.random() * 2)) * TWO_PI;
+
+      const startAngle = state.currentAngle;
+      const targetAngle = startAngle + extraTurns + delta;
+      const duration = 3800;
+      const startTime = performance.now();
+      let lastSlice = -1;
+
+      const animate = (now) => {
+        const t = Math.min(1, (now - startTime) / duration);
+        const eased = 1 - Math.pow(1 - t, 4);
+        const angle = startAngle + (targetAngle - startAngle) * eased;
+        state.currentAngle = angle;
+
+        const rel = (((1.5 * Math.PI - angle) % TWO_PI) + TWO_PI) % TWO_PI;
+        const slice = Math.floor(rel / sliceAngle) % n;
+        if (slice !== lastSlice) {
+          if (lastSlice !== -1) playTick();
+          lastSlice = slice;
+        }
+
+        const bulbPhase = Math.floor(t * 28);
+        drawWheel(angle, bulbPhase);
+
+        if (t < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          state.currentAngle = targetAngle % TWO_PI;
+          state.spinning = false;
+          applyState(data);
+          playWinChime();
+          launchConfetti();
+          const w = data.winner;
+          const tagsText = (w.tags || []).join(" · ") || "无标签";
+          winnerBanner.className = "win";
+          winnerBanner.innerHTML = `🎉 天命选中：<strong>【${escapeHtml(w.name)}】</strong> &nbsp;|&nbsp; ${escapeHtml(w.category)} · ¥${w.price} · ${escapeHtml(tagsText)}`;
+        }
+      };
+
+      requestAnimationFrame(animate);
+    }
+
+    async function deleteItem(number) {
+      if (state.spinning) return;
+      const data = await apiRequest("/api/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          number,
+          max_price: state.maxPrice,
+          exclude_tags: Array.from(state.excludedTags),
+        }),
+      });
+      if (data) applyState(data);
+    }
+
+    document.getElementById("add-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (state.spinning) return;
+      const nameEl = document.getElementById("add-name");
+      const catEl = document.getElementById("add-category");
+      const priceEl = document.getElementById("add-price");
+      const tagsEl = document.getElementById("add-tags");
+
+      const data = await apiRequest("/api/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: nameEl.value,
+          category: catEl.value,
+          price: priceEl.value || 0,
+          tags: tagsEl.value,
+          max_price: state.maxPrice,
+          exclude_tags: Array.from(state.excludedTags),
+        }),
+      });
+      if (data) {
+        nameEl.value = "";
+        catEl.value = "";
+        priceEl.value = "";
+        tagsEl.value = "";
+        applyState(data);
+      }
+    });
+
+    budgetSlider.addEventListener("input", () => {
+      const raw = Number(budgetSlider.value);
+      state.maxPrice = raw <= 14 ? 0 : raw;
+      budgetLabel.textContent = state.maxPrice <= 0 ? "不限" : `≤ ¥${state.maxPrice}`;
+      if (!state.spinning) fetchState();
+    });
+
+    document.getElementById("budget-reset").addEventListener("click", () => {
+      if (state.spinning) return;
+      state.maxPrice = 0;
+      fetchState();
+    });
+
+    document.getElementById("clear-history-btn").addEventListener("click", async () => {
+      if (state.spinning) return;
+      const data = await apiRequest("/api/clear_history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          max_price: state.maxPrice,
+          exclude_tags: Array.from(state.excludedTags),
+        }),
+      });
+      if (data) applyState(data);
+    });
+
+    document.getElementById("sound-toggle").addEventListener("click", (e) => {
+      state.soundOn = !state.soundOn;
+      e.target.textContent = state.soundOn ? "🔊 音效开" : "🔇 静音";
+    });
+
+    document.getElementById("refresh-btn").addEventListener("click", fetchState);
+    document.getElementById("bug-retry").addEventListener("click", fetchState);
+    spinBtn.addEventListener("click", spinWheel);
+
+    setupHighDpiWheel();
+    fetchState();
+  </script>
+</body>
+</html>
