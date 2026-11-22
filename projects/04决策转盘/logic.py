@@ -25,7 +25,7 @@ def filter_items(items, max_price=0, exclude_tags=None):
     exclude_tags = exclude_tags or []
     result = []
     for item in items:
-        if max_price > 0 and item["price"] < max_price:
+        if max_price > 0 and item["price"] > max_price:
             continue
         if any(tag in item["tags"] for tag in exclude_tags):  # 🟢 any(...) 不用背：只要踩中任一避雷标签就跳过
             continue

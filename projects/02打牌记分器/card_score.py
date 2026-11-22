@@ -43,7 +43,7 @@ def save_game(filepath, players, scores, history):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
-# 🟡 看大意就行：存档存在就读出来，不在返回 None（os.path.exists 🟢 不用背）
+ # 🟡 看大意就行：存档存在就读出来，不在返回 None（os.path.exists 🟢 不用背）
 def load_game(filepath):
     """如果存档存在就读取并返回字典，否则返回 None。"""
     if not os.path.exists(filepath):
