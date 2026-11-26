@@ -17,8 +17,11 @@ def total_spent(history):
     例：[{"price": 24}, {"price": 18}] → 42；空列表 [] → 0
     """
     # TODO
-    pass
-    # 记录：
+    total_price = 0
+    for s in history:
+        total_price += s["price"]
+    return total_price    
+    # 记录：🟡 第 2 级提示
 
 
 # 🔴 第 2 题：预算内能吃什么
@@ -28,7 +31,11 @@ def names_under(items, budget):
     例：[{"name": "A", "price": 18}, {"name": "B", "price": 30}]，budget=20 → ["A"]
     """
     # TODO
-    pass
+    name = []
+    for item in items:
+        if item["price"] <= budget:
+            name.append(item["name"])
+    return name       
     # 记录：
 
 
@@ -39,8 +46,12 @@ def spent_by_category(history):
         → {"中餐": 46, "面食": 18}
     """
     # TODO
-    pass
-    # 记录：
+    spend = {}
+    for s in history:
+        cat = s["category"]
+        spend[cat] = spend.get(cat,0) + s["price"]
+    return spend    
+    # 记录：🟡 挖空模式（第 1 级提示）
 
 
 # 🔴 第 4 题：每个标签出现几次（提示：一条选项有好几个标签，循环里还要再套一层循环）
@@ -50,8 +61,13 @@ def count_by_tag(items):
     例：[{"tags": ["热乎", "管饱"]}, {"tags": ["热乎"]}] → {"热乎": 2, "管饱": 1}
     """
     # TODO
-    pass
-    # 记录：
+    time = {}
+    for item in items:
+        tags = item["tags"]
+        for tag in tags:
+            time[tag] = time.get(tag,0) +1
+    return time        
+    # 记录：🟡 挖空模式（第 1 级提示）
 
 
 # 🔴 第 5 题：把报告存成 JSON 文件（中文不乱码、带缩进）
@@ -60,7 +76,8 @@ def save_report(report, filepath):
     把 report 写进 filepath，什么都不用返回。
     """
     # TODO
-    pass
+    with open(filepath,"w", encoding= "utf-8") as f:
+        json.dump(report,f,ensure_ascii= False,indent= 2)
     # 记录：
 
 
