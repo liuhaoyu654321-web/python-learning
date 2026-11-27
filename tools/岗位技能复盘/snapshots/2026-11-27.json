@@ -1,0 +1,1114 @@
+{
+ "date": "2026-11-27",
+ "run_id": 21,
+ "run_at": "2026-11-27T13:03:40",
+ "rules_version": "2026-11-25",
+ "counts": {
+  "total": 2098,
+  "ab": 1174,
+  "ab_jds": 238,
+  "ab_jds_zhilian": 224,
+  "ab_jds_boss": 14,
+  "c": 44,
+  "d": 880
+ },
+ "thresholds": {
+  "min_jds": 5,
+  "min_companies": 3,
+  "shift_pp": 5.0
+ },
+ "skills": {
+  "Python": {
+   "group": "编程与数据底座",
+   "jds": 128,
+   "companies": 112,
+   "share": 53.8,
+   "delta": -11.7,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "SQL / 关系数据库": {
+   "group": "编程与数据底座",
+   "jds": 80,
+   "companies": 77,
+   "share": 33.6,
+   "delta": -5.5,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "MySQL": {
+   "group": "编程与数据底座",
+   "jds": 33,
+   "companies": 31,
+   "share": 13.9,
+   "delta": -2.8,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "PostgreSQL": {
+   "group": "编程与数据底座",
+   "jds": 16,
+   "companies": 15,
+   "share": 6.7,
+   "delta": -2.5,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "SQLite": {
+   "group": "编程与数据底座",
+   "jds": 0,
+   "companies": 0,
+   "share": 0.0,
+   "delta": 0.0,
+   "meets": false,
+   "confirmed": false,
+   "shift_confirmed": false
+  },
+  "Redis / 缓存": {
+   "group": "编程与数据底座",
+   "jds": 21,
+   "companies": 19,
+   "share": 8.8,
+   "delta": -3.3,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "HTTP / REST API / JSON": {
+   "group": "编程与数据底座",
+   "jds": 101,
+   "companies": 91,
+   "share": 42.4,
+   "delta": -7.6,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "FastAPI": {
+   "group": "编程与数据底座",
+   "jds": 23,
+   "companies": 22,
+   "share": 9.7,
+   "delta": -3.5,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "Flask / Django": {
+   "group": "编程与数据底座",
+   "jds": 15,
+   "companies": 15,
+   "share": 6.3,
+   "delta": -2.3,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "Java / Go / Node.js": {
+   "group": "编程与数据底座",
+   "jds": 70,
+   "companies": 55,
+   "share": 29.4,
+   "delta": -5.7,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "前端基础 (HTML/JS/Vue/React)": {
+   "group": "编程与数据底座",
+   "jds": 33,
+   "companies": 31,
+   "share": 13.9,
+   "delta": -4.5,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "Git 版本控制": {
+   "group": "编程与数据底座",
+   "jds": 18,
+   "companies": 18,
+   "share": 7.6,
+   "delta": -2.2,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "自动化脚本 / 爬虫 / 数据处理": {
+   "group": "编程与数据底座",
+   "jds": 58,
+   "companies": 56,
+   "share": 24.4,
+   "delta": -4.3,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "Excel / 数据报表": {
+   "group": "编程与数据底座",
+   "jds": 17,
+   "companies": 16,
+   "share": 7.1,
+   "delta": 2.5,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "Postman / 接口调试": {
+   "group": "编程与数据底座",
+   "jds": 7,
+   "companies": 6,
+   "share": 2.9,
+   "delta": -0.5,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "Agent / 智能体": {
+   "group": "AI应用与Agent核心",
+   "jds": 153,
+   "companies": 140,
+   "share": 64.3,
+   "delta": -13.3,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "大模型 / LLM API 调用": {
+   "group": "AI应用与Agent核心",
+   "jds": 138,
+   "companies": 124,
+   "share": 58.0,
+   "delta": -13.8,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "Prompt 工程 / 提示词": {
+   "group": "AI应用与Agent核心",
+   "jds": 87,
+   "companies": 79,
+   "share": 36.6,
+   "delta": -9.4,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "RAG / 知识库 / 向量检索": {
+   "group": "AI应用与Agent核心",
+   "jds": 116,
+   "companies": 108,
+   "share": 48.7,
+   "delta": -10.5,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "向量数据库 (Milvus/PGVector/Chroma)": {
+   "group": "AI应用与Agent核心",
+   "jds": 37,
+   "companies": 36,
+   "share": 15.5,
+   "delta": -3.5,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "工作流编排 (Workflow)": {
+   "group": "AI应用与Agent核心",
+   "jds": 60,
+   "companies": 53,
+   "share": 25.2,
+   "delta": -6.4,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "Dify": {
+   "group": "AI应用与Agent核心",
+   "jds": 33,
+   "companies": 33,
+   "share": 13.9,
+   "delta": -3.9,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "Coze (扣子)": {
+   "group": "AI应用与Agent核心",
+   "jds": 17,
+   "companies": 17,
+   "share": 7.1,
+   "delta": -2.1,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "n8n / RPA": {
+   "group": "AI应用与Agent核心",
+   "jds": 8,
+   "companies": 8,
+   "share": 3.4,
+   "delta": -1.2,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "飞书多维表格 / 低代码": {
+   "group": "AI应用与Agent核心",
+   "jds": 13,
+   "companies": 12,
+   "share": 5.5,
+   "delta": 0.3,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "LangChain / LangGraph / LlamaIndex": {
+   "group": "AI应用与Agent核心",
+   "jds": 56,
+   "companies": 50,
+   "share": 23.5,
+   "delta": -7.5,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "Function Calling / Tool Use": {
+   "group": "AI应用与Agent核心",
+   "jds": 45,
+   "companies": 44,
+   "share": 18.9,
+   "delta": -6.4,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "MCP 协议": {
+   "group": "AI应用与Agent核心",
+   "jds": 19,
+   "companies": 18,
+   "share": 8.0,
+   "delta": -2.3,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "AI Eval / 评测 / Bad Case": {
+   "group": "AI应用与Agent核心",
+   "jds": 45,
+   "companies": 44,
+   "share": 18.9,
+   "delta": -5.2,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "Linux / Ubuntu": {
+   "group": "工程化与交付",
+   "jds": 38,
+   "companies": 36,
+   "share": 16.0,
+   "delta": -2.4,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "Docker / 容器部署": {
+   "group": "工程化与交付",
+   "jds": 30,
+   "companies": 29,
+   "share": 12.6,
+   "delta": -3.5,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "Kubernetes (K8s)": {
+   "group": "工程化与交付",
+   "jds": 11,
+   "companies": 11,
+   "share": 4.6,
+   "delta": -1.7,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "测试 / 单元测试 / 自动化测试": {
+   "group": "工程化与交付",
+   "jds": 81,
+   "companies": 77,
+   "share": 34.0,
+   "delta": -3.4,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "部署上线 / 私有化交付": {
+   "group": "工程化与交付",
+   "jds": 78,
+   "companies": 76,
+   "share": 32.8,
+   "delta": -6.3,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "异常处理 / 日志 / 监控": {
+   "group": "工程化与交付",
+   "jds": 54,
+   "companies": 52,
+   "share": 22.7,
+   "delta": -6.0,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "需求沟通 / POC / 技术文档": {
+   "group": "工程化与交付",
+   "jds": 175,
+   "companies": 160,
+   "share": 73.5,
+   "delta": -5.2,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "技术支持 / 工单排查 / 客户成功": {
+   "group": "工程化与交付",
+   "jds": 67,
+   "companies": 53,
+   "share": 28.2,
+   "delta": 0.6,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "企业系统 (SaaS/ERP/CRM/WMS/MES)": {
+   "group": "工程化与交付",
+   "jds": 36,
+   "companies": 33,
+   "share": 15.1,
+   "delta": 0.2,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "英语读写 / 英文邮件": {
+   "group": "工程化与交付",
+   "jds": 21,
+   "companies": 21,
+   "share": 8.8,
+   "delta": 8.8,
+   "meets": true,
+   "confirmed": false,
+   "shift_confirmed": false
+  },
+  "Cursor": {
+   "group": "AI编程工具与进阶",
+   "jds": 16,
+   "companies": 15,
+   "share": 6.7,
+   "delta": -2.5,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "Claude Code / Codex / Vibe Coding": {
+   "group": "AI编程工具与进阶",
+   "jds": 27,
+   "companies": 26,
+   "share": 11.3,
+   "delta": -4.2,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "微调 (LoRA / SFT)": {
+   "group": "AI编程工具与进阶",
+   "jds": 28,
+   "companies": 28,
+   "share": 11.8,
+   "delta": -4.3,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  },
+  "PyTorch": {
+   "group": "AI编程工具与进阶",
+   "jds": 14,
+   "companies": 14,
+   "share": 5.9,
+   "delta": -1.0,
+   "meets": true,
+   "confirmed": true,
+   "shift_confirmed": false
+  }
+ },
+ "emerging": {
+  "engineering": {
+   "jds": 11,
+   "companies": 11,
+   "meets": true,
+   "confirmed": true
+  },
+  "vllm": {
+   "jds": 10,
+   "companies": 10,
+   "meets": true,
+   "confirmed": true
+  },
+  "spring": {
+   "jds": 9,
+   "companies": 9,
+   "meets": true,
+   "confirmed": true
+  },
+  "skill": {
+   "jds": 8,
+   "companies": 7,
+   "meets": true,
+   "confirmed": true
+  },
+  "plc": {
+   "jds": 7,
+   "companies": 7,
+   "meets": true,
+   "confirmed": false
+  },
+  "web": {
+   "jds": 6,
+   "companies": 5,
+   "meets": true,
+   "confirmed": true
+  },
+  "oracle": {
+   "jds": 6,
+   "companies": 6,
+   "meets": true,
+   "confirmed": true
+  },
+  "mybatis": {
+   "jds": 5,
+   "companies": 4,
+   "meets": true,
+   "confirmed": true
+  },
+  "harness": {
+   "jds": 5,
+   "companies": 4,
+   "meets": true,
+   "confirmed": false
+  },
+  "token": {
+   "jds": 5,
+   "companies": 5,
+   "meets": true,
+   "confirmed": true
+  },
+  "wi-fi": {
+   "jds": 5,
+   "companies": 5,
+   "meets": true,
+   "confirmed": true
+  },
+  "abb": {
+   "jds": 5,
+   "companies": 5,
+   "meets": true,
+   "confirmed": false
+  },
+  "skills": {
+   "jds": 4,
+   "companies": 4,
+   "meets": false,
+   "confirmed": false
+  },
+  "boot": {
+   "jds": 4,
+   "companies": 4,
+   "meets": false,
+   "confirmed": false
+  },
+  "ci/cd": {
+   "jds": 4,
+   "companies": 4,
+   "meets": false,
+   "confirmed": false
+  },
+  "autogen": {
+   "jds": 4,
+   "companies": 4,
+   "meets": false,
+   "confirmed": false
+  },
+  "springcloud": {
+   "jds": 4,
+   "companies": 3,
+   "meets": false,
+   "confirmed": false
+  },
+  "mongodb": {
+   "jds": 4,
+   "companies": 4,
+   "meets": false,
+   "confirmed": false
+  },
+  "opencv": {
+   "jds": 4,
+   "companies": 4,
+   "meets": false,
+   "confirmed": false
+  },
+  "tensorflow": {
+   "jds": 4,
+   "companies": 4,
+   "meets": false,
+   "confirmed": false
+  },
+  "appium": {
+   "jds": 4,
+   "companies": 4,
+   "meets": false,
+   "confirmed": false
+  },
+  "oa": {
+   "jds": 4,
+   "companies": 4,
+   "meets": false,
+   "confirmed": false
+  },
+  "github": {
+   "jds": 4,
+   "companies": 4,
+   "meets": false,
+   "confirmed": false
+  },
+  "dumate": {
+   "jds": 4,
+   "companies": 1,
+   "meets": false,
+   "confirmed": false
+  },
+  "shell": {
+   "jds": 4,
+   "companies": 4,
+   "meets": false,
+   "confirmed": false
+  },
+  "bug": {
+   "jds": 4,
+   "companies": 4,
+   "meets": false,
+   "confirmed": false
+  },
+  "server": {
+   "jds": 4,
+   "companies": 4,
+   "meets": false,
+   "confirmed": false
+  },
+  "ocr": {
+   "jds": 4,
+   "companies": 4,
+   "meets": false,
+   "confirmed": false
+  },
+  "fanuc": {
+   "jds": 4,
+   "companies": 3,
+   "meets": false,
+   "confirmed": false
+  },
+  "loop": {
+   "jds": 3,
+   "companies": 3,
+   "meets": false,
+   "confirmed": false
+  },
+  "vue3": {
+   "jds": 3,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "jmeter": {
+   "jds": 3,
+   "companies": 3,
+   "meets": false,
+   "confirmed": false
+  },
+  "next.js": {
+   "jds": 3,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "gpu": {
+   "jds": 3,
+   "companies": 3,
+   "meets": false,
+   "confirmed": false
+  },
+  "workbuddy": {
+   "jds": 3,
+   "companies": 3,
+   "meets": false,
+   "confirmed": false
+  },
+  "xml": {
+   "jds": 3,
+   "companies": 1,
+   "meets": false,
+   "confirmed": false
+  },
+  "elasticsearch": {
+   "jds": 3,
+   "companies": 3,
+   "meets": false,
+   "confirmed": false
+  },
+  "network": {
+   "jds": 3,
+   "companies": 3,
+   "meets": false,
+   "confirmed": false
+  },
+  "reconnecting": {
+   "jds": 3,
+   "companies": 3,
+   "meets": false,
+   "confirmed": false
+  },
+  "try": {
+   "jds": 3,
+   "companies": 3,
+   "meets": false,
+   "confirmed": false
+  },
+  "router": {
+   "jds": 3,
+   "companies": 3,
+   "meets": false,
+   "confirmed": false
+  },
+  "press": {
+   "jds": 3,
+   "companies": 3,
+   "meets": false,
+   "confirmed": false
+  },
+  "modem": {
+   "jds": 3,
+   "companies": 3,
+   "meets": false,
+   "confirmed": false
+  },
+  "play": {
+   "jds": 3,
+   "companies": 3,
+   "meets": false,
+   "confirmed": false
+  },
+  "space": {
+   "jds": 3,
+   "companies": 3,
+   "meets": false,
+   "confirmed": false
+  },
+  "cables": {
+   "jds": 3,
+   "companies": 3,
+   "meets": false,
+   "confirmed": false
+  },
+  "checking": {
+   "jds": 3,
+   "companies": 3,
+   "meets": false,
+   "confirmed": false
+  },
+  "plm": {
+   "jds": 3,
+   "companies": 3,
+   "meets": false,
+   "confirmed": false
+  },
+  "sqlserver": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "curl": {
+   "jds": 2,
+   "companies": 1,
+   "meets": false,
+   "confirmed": false
+  },
+  "apifox": {
+   "jds": 2,
+   "companies": 1,
+   "meets": false,
+   "confirmed": false
+  },
+  "sse": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "deepspeed": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "es": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "nosql": {
+   "jds": 2,
+   "companies": 1,
+   "meets": false,
+   "confirmed": false
+  },
+  "supervisor": {
+   "jds": 2,
+   "companies": 1,
+   "meets": false,
+   "confirmed": false
+  },
+  "tiktok/ins/youtube": {
+   "jds": 2,
+   "companies": 1,
+   "meets": false,
+   "confirmed": false
+  },
+  "bitable": {
+   "jds": 2,
+   "companies": 1,
+   "meets": false,
+   "confirmed": false
+  },
+  "celery": {
+   "jds": 2,
+   "companies": 1,
+   "meets": false,
+   "confirmed": false
+  },
+  "job": {
+   "jds": 2,
+   "companies": 1,
+   "meets": false,
+   "confirmed": false
+  },
+  "hitl": {
+   "jds": 2,
+   "companies": 1,
+   "meets": false,
+   "confirmed": false
+  },
+  "kol": {
+   "jds": 2,
+   "companies": 1,
+   "meets": false,
+   "confirmed": false
+  },
+  "rabbitmq": {
+   "jds": 2,
+   "companies": 1,
+   "meets": false,
+   "confirmed": false
+  },
+  "xxl": {
+   "jds": 2,
+   "companies": 1,
+   "meets": false,
+   "confirmed": false
+  },
+  "bullmq": {
+   "jds": 2,
+   "companies": 1,
+   "meets": false,
+   "confirmed": false
+  },
+  "checkpointer": {
+   "jds": 2,
+   "companies": 1,
+   "meets": false,
+   "confirmed": false
+  },
+  "mcn": {
+   "jds": 2,
+   "companies": 1,
+   "meets": false,
+   "confirmed": false
+  },
+  "selenium": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "pandas": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "plan": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "ci": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "requests": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "numpy": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "mq": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "aws": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "gitlab": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "ros": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "cot": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "diffusion": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "runway": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "playwright/selenium": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "agents": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "sdk": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "query": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "memory": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "jenkins": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "context": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "transformers": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "modbus": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "transformer": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "scpi": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "jira": {
+   "jds": 2,
+   "companies": 1,
+   "meets": false,
+   "confirmed": false
+  },
+  "axure": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "tob": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "cet-6": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "cet-4": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "agentic": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "runtime": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "llamalndex": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "call": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "bm25": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "xmind": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "bom": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "faster": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "yolo": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "r-cnn": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "nginx": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "asr": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "rlhf": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  },
+  "mqtt": {
+   "jds": 2,
+   "companies": 2,
+   "meets": false,
+   "confirmed": false
+  }
+ }
+}
