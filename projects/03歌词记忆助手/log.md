@@ -5,3 +5,6 @@
 - **2026-11-20 12:32｜创建**：新增挖空练习文件 `practice_1_songs_json.py`，专项练习多行歌词清洗、字典写入与 `with open` / `json.dump()` 曲库存盘（已附 `🔴/🟡/🟢` 分级注释）。
 - **2026-11-20 13:12｜修改**：将 `practice_1_songs_json.py` 的新歌清洗与 JSON 曲库存盘函数合入 `lyric_trainer.py`，新增 `songs.json` 自动读写、菜单 `a` 终端添加新歌与 `q` 退出，同步更新 `🔴/🟡/🟢` 分级注释并通过端到端测试。
 - **2026-11-20 14:08｜修改**：按方案 A 瘦身 `lyric_trainer.py`（从 169 行精简至 80 行），将内置歌词拆出为独立 `songs.json`，删去 `init_songs()` 与重复校验胶水代码，同步更新 `🔴/🟡/🟢` 分级注释。
+- **2026-11-27 16:00｜创建**：新增第 1.4 节专项挖空练习 `practice_2_index_range.py`，包含 `pick_song_by_num`（1 起始编号转 `[i - 1]` 下标）与 `build_lyric_pairs`（列表清洗与 `range` 相邻下标配对），附自动测试与 `🔴/🟡/🟢` 分级注释。
+- **2026-11-27 16:47｜修改**：用户完成 `practice_2_index_range.py` 中 `pick_song_by_num` 与 `build_lyric_pairs` 两个核心函数（🟡 提示后写出），并全部通过自动测试。
+- **2026-11-27 17:24｜创建**：新增第 1.4 节错题强化 4 连刷 `practice_3_1_4_drill.py`（针对 `int(num)`、`[i - 1]` 删除、`range(len(...))`、`range(len(...) - 1)` 相邻比较与列表去空清洗，附自动测试与 `🔴/🟡/🟢` 分级注释）。
